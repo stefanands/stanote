@@ -1,0 +1,52 @@
+appId: fr.barnabas.stanote
+productName: Stanote
+directories:
+  buildResources: build
+  output: release
+
+# Publication des builds sur les GitHub Releases (electron-builder --publish).
+# owner/repo sont déduits du dépôt Git lors de la publication en CI.
+# releaseType: release → la release est publiée directement (pas de brouillon).
+publish:
+  provider: github
+  releaseType: release
+
+files:
+  - out/**
+  - package.json
+
+# Stanote se déclare capable d'ouvrir ces types (clic droit → Ouvrir avec).
+# Devenir l'app par défaut reste une action manuelle de l'utilisateur (Finder).
+fileAssociations:
+  - ext: md
+    name: Markdown Document
+    role: Editor
+  - ext: markdown
+    name: Markdown Document
+    role: Editor
+  - ext: txt
+    name: Text Document
+    role: Editor
+
+# Modules natifs et binaires : hors de l'asar pour pouvoir les charger/exécuter
+asarUnpack:
+  - node_modules/node-pty/**
+  - node_modules/@vscode/ripgrep/**
+  - node_modules/@vscode/ripgrep-*/**
+
+mac:
+  target:
+    - dmg
+  icon: build/icon.icns
+  category: public.app-category.productivity
+  # Signature automatique si les certificats Apple sont présents (CI, secret
+  # CSC_LINK) ; sinon build non signé. En local, `npm run dist:mac` désactive la
+  # découverte d'identité (CSC_IDENTITY_AUTO_DISCOVERY=false) pour rester non signé.
+
+linux:
+  target:
+    - AppImage
+  icon: build/icon.png
+  category: Utility
+
+npmRebuild: true
