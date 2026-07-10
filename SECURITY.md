@@ -9,7 +9,7 @@ released version.
 
 Please **do not** open a public issue for security vulnerabilities.
 
-Instead, email **stefana@barnabas-digital.fr** with:
+Instead, email **bonjour@saintlemur.fr** with:
 
 - a description of the vulnerability and its impact,
 - steps to reproduce (a proof of concept if possible),
