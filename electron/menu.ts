@@ -1,10 +1,12 @@
 import { app, BrowserWindow, ipcMain, Menu, type MenuItemConstructorOptions } from 'electron'
+import { setLocale } from './appState'
 
 export type Locale = 'fr' | 'en'
 
 const labels = {
   fr: {
     file: 'Fichier',
+    newNote: 'Nouvelle note',
     newWindow: 'Nouvelle fenêtre',
     openFolder: 'Ouvrir un dossier…',
     exportPdf: 'Exporter en PDF…',
@@ -34,6 +36,7 @@ const labels = {
   },
   en: {
     file: 'File',
+    newNote: 'New Note',
     newWindow: 'New Window',
     openFolder: 'Open Folder…',
     exportPdf: 'Export to PDF…',
@@ -97,6 +100,7 @@ function buildMenu(locale: Locale): void {
     {
       label: l.file,
       submenu: [
+        { label: l.newNote, accelerator: 'CmdOrCtrl+N', click: () => send('newNote') },
         { label: l.newWindow, accelerator: 'CmdOrCtrl+Shift+N', click: () => handlers.onNewWindow() },
         { type: 'separator' },
         { label: l.openFolder, accelerator: 'CmdOrCtrl+O', click: () => send('openFolder') },
@@ -166,8 +170,12 @@ function buildMenu(locale: Locale): void {
 
 export function setupMenu(menuHandlers: MenuHandlers): void {
   handlers = menuHandlers
-  buildMenu(app.getLocale().toLowerCase().startsWith('fr') ? 'fr' : 'en')
+  const initial: Locale = app.getLocale().toLowerCase().startsWith('fr') ? 'fr' : 'en'
+  setLocale(initial)
+  buildMenu(initial)
   ipcMain.on('app:setLocale', (_event, locale: Locale) => {
-    buildMenu(locale === 'fr' ? 'fr' : 'en')
+    const l: Locale = locale === 'fr' ? 'fr' : 'en'
+    setLocale(l)
+    buildMenu(l)
   })
 }

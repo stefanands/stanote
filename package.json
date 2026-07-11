@@ -1,6 +1,6 @@
 {
   "name": "stanote",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Stanote — éditeur markdown WYSIWYG + terminal + navigateur de fichiers",
   "main": "out/main/main.js",
   "author": "Stefana Andriason <stefana@barnabas-digital.fr>",
@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "@fontsource/inter": "^5.2.8",
+    "@fontsource/jetbrains-mono": "^5.2.8",
     "@milkdown/crepe": "^7.21.2",
     "@vscode/ripgrep": "^1.18.0",
     "@xterm/addon-fit": "^0.11.0",

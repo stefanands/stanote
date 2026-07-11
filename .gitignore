@@ -8,8 +8,12 @@ release/
 # Fichiers internes gardés en local, non publiés
 retours-et-bugs.md
 docs/DEPLOIEMENT.md
+docs/FINDER-INTEGRATION.md
 CLAUDE.md
 architecture-stancode.md
 site/
 stancode-logo.jpg
 stanote-icon-old.png
+lemugeekien-site.html
+tab-example.png
+assets/screenshots/apercu2.png

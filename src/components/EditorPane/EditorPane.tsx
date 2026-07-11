@@ -12,7 +12,12 @@ export default function EditorPane(): JSX.Element {
     useTabs()
 
   const active = tabs.find((t) => t.path === activePath)
-  const kind = active ? fileKind(active.path) : 'other'
+  const kind = active ? (active.untitled ? 'markdown' : fileKind(active.path)) : 'other'
+
+  const requestClose = (tab: (typeof tabs)[number]): void => {
+    if (tab.untitled && tab.dirty && !confirm(t('discardUntitled'))) return
+    void closeTab(tab.path)
+  }
 
   return (
     <div className="pane editor-pane">
@@ -21,22 +26,23 @@ export default function EditorPane(): JSX.Element {
           {tabs.map((tab) => (
             <div
               key={tab.path}
-              className={`tab ${tab.path === activePath ? 'active' : ''}`}
-              title={tab.path}
+              className={`tab ${tab.path === activePath ? 'active' : ''} ${tab.dirty ? 'dirty' : ''}`}
+              title={tab.untitled ? tab.name : tab.path}
               onClick={() => activate(tab.path)}
               onAuxClick={(e) => {
-                if (e.button === 1) void closeTab(tab.path)
+                if (e.button === 1) requestClose(tab)
               }}
             >
               <span className="tab-name">{tab.name}</span>
               <span
-                className={`tab-close ${tab.dirty ? 'dirty' : ''}`}
+                className="tab-indicator"
                 onClick={(e) => {
                   e.stopPropagation()
-                  void closeTab(tab.path)
+                  requestClose(tab)
                 }}
               >
-                {tab.dirty ? '●' : '×'}
+                <span className="tab-dot">●</span>
+                <span className="tab-x">×</span>
               </span>
             </div>
           ))}

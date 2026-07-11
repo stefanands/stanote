@@ -37,7 +37,9 @@ const dict = {
     layout: 'Disposition',
     layoutEditorLeft: 'Éditeur à gauche',
     layoutEditorRight: 'Éditeur à droite',
-    layoutSidebar: 'Barre latérale'
+    layoutSidebar: 'Barre latérale',
+    discardUntitled: 'Fermer cette note sans l’enregistrer ?',
+    untitled: 'note non enregistrée'
   },
   en: {
     files: 'Files',
@@ -73,7 +75,9 @@ const dict = {
     layout: 'Layout',
     layoutEditorLeft: 'Editor left',
     layoutEditorRight: 'Editor right',
-    layoutSidebar: 'Sidebar'
+    layoutSidebar: 'Sidebar',
+    discardUntitled: 'Close this note without saving?',
+    untitled: 'unsaved note'
   }
 } as const
 

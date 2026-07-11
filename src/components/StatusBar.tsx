@@ -14,8 +14,9 @@ export default function StatusBar(): JSX.Element {
   const { tabs, activePath } = useTabs()
 
   const active = tabs.find((tab) => tab.path === activePath)
-  const relative =
-    active && rootPath && active.path.startsWith(rootPath)
+  const relative = active?.untitled
+    ? `${active.name} — ${t('untitled')}`
+    : active && rootPath && active.path.startsWith(rootPath)
       ? active.path.slice(rootPath.length + 1)
       : active?.path
 

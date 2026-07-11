@@ -4,6 +4,34 @@ All notable changes to Stanote are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] — 2026-07-11
+
+### Changed
+
+- Refreshed, flat "floating" interface: solid background, file tree and terminal
+  as rounded cards, borderless floating editor.
+- Minimal underlined tabs in JetBrains Mono; the "stanote" wordmark now uses
+  JetBrains Mono too. The rest of the UI stays on the system font.
+- Light and dark themes reworked to match the new look.
+
+## [1.0.2] — 2026-07-11
+
+### Added
+
+- Drag and drop a file or folder onto another folder to move it (the tree stays
+  alphabetically sorted).
+- Drop a folder (or file) from Finder onto the window to open it.
+- New note (`⌘N`): write first, choose where to save later ("Save As"), even
+  with no folder open.
+- Spelling suggestions in the editor's right-click menu (with "Add to
+  Dictionary"), alongside cut/copy/paste.
+- New files default to the `.md` extension when none is given.
+
+### Changed
+
+- Rename now happens **in place** in the tree (no more dialog at the top), and
+  can be triggered by double-clicking an item.
+
 ## [1.0.1] — 2026-07-10
 
 ### Fixed

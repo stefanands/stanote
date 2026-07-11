@@ -7,13 +7,13 @@ import type { Theme } from '../../stores/theme'
 // Palette neutralGraphite (night / day)
 export const XTERM_THEMES: Record<Theme, ITheme> = {
   dark: {
-    background: '#141617',
+    background: '#1c1f20',
     foreground: '#E7E8E7',
     cursor: '#87979F',
     selectionBackground: 'rgba(135, 151, 159, 0.32)'
   },
   light: {
-    background: '#fffefc',
+    background: '#f5f5f5',
     foreground: '#242525',
     cursor: '#626D73',
     selectionBackground: 'rgba(98, 109, 115, 0.24)'

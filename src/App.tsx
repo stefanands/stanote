@@ -104,6 +104,38 @@ export default function App(): JSX.Element {
     applyFont(fontIndex)
   }, [fontIndex])
 
+  // Glisser un dossier (ou un fichier) depuis le Finder sur la fenêtre.
+  useEffect(() => {
+    const onDragOver = (e: DragEvent): void => {
+      if (e.dataTransfer && Array.from(e.dataTransfer.types).includes('Files')) e.preventDefault()
+    }
+    const onDrop = async (e: DragEvent): Promise<void> => {
+      if (!e.dataTransfer || e.dataTransfer.files.length === 0) return // glisser interne : ignoré
+      e.preventDefault()
+      const path = window.stancode.getPathForFile(e.dataTransfer.files[0])
+      if (!path) return
+      const ws = await window.stancode.fs.openPath(path)
+      if (ws) {
+        useWorkspace.getState().setWorkspace(ws)
+        return
+      }
+      // Sinon c'est un fichier : ouvrir son dossier parent + le fichier.
+      const parent = path.slice(0, path.lastIndexOf('/'))
+      const pw = await window.stancode.fs.openPath(parent)
+      if (pw) {
+        useWorkspace.getState().setWorkspace(pw)
+        void useTabs.getState().openFile(path)
+      }
+    }
+    const onDropWrap = (e: DragEvent): void => void onDrop(e)
+    window.addEventListener('dragover', onDragOver)
+    window.addEventListener('drop', onDropWrap)
+    return () => {
+      window.removeEventListener('dragover', onDragOver)
+      window.removeEventListener('drop', onDropWrap)
+    }
+  }, [])
+
   useEffect(() => {
     const target = window.stancode.openTarget
     if (target) {
@@ -128,6 +160,7 @@ export default function App(): JSX.Element {
     })
     const offMenu = window.stancode.onMenuAction((action) => {
       if (action === 'openFolder') void openFolderDialog()
+      else if (action === 'newNote') useTabs.getState().newUntitled()
       else if (action === 'save') void useTabs.getState().saveActive()
       else if (action === 'closeTab') void useTabs.getState().closeActive()
       else if (action === 'exportPdf') exportActivePdf()
@@ -269,7 +302,7 @@ export default function App(): JSX.Element {
   return (
     <div className="app">
       <div className="titlebar">
-        <span className="titlebar-title">Stanote</span>
+        <span className="titlebar-title">stanote</span>
         <div className="titlebar-actions">
           <button
             className={showExplorer ? 'tbar-btn active' : 'tbar-btn'}

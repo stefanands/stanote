@@ -4,6 +4,7 @@ import { join } from 'path'
 import { registerFsHandlers, disposeFsForWebContents } from './fs'
 import { registerPtyHandlers, disposePtyForWebContents } from './pty'
 import { registerSearchHandlers, disposeSearchForWebContents } from './search'
+import { registerContextMenu } from './contextMenu'
 import { setupMenu } from './menu'
 
 /** Rend un HTML d'impression en PDF via une fenêtre hors-écran, puis propose
@@ -63,6 +64,15 @@ export function createWindow(opts: WindowOpts = {}): void {
   })
 
   const id = win.webContents.id
+  registerContextMenu(win.webContents)
+  // Langues du correcteur (macOS gère automatiquement via l'OS).
+  if (process.platform !== 'darwin') {
+    try {
+      win.webContents.session.setSpellCheckerLanguages(['fr', 'en-US'])
+    } catch {
+      // langue non disponible : on garde la valeur par défaut
+    }
+  }
   win.webContents.on('destroyed', () => {
     disposeFsForWebContents(id)
     disposePtyForWebContents(id)

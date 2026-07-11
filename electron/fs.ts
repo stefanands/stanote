@@ -1,4 +1,4 @@
-import { dialog, ipcMain, shell, type WebContents } from 'electron'
+import { BrowserWindow, dialog, ipcMain, shell, type WebContents } from 'electron'
 import { promises as fsp } from 'fs'
 import { basename, dirname, join } from 'path'
 import chokidar, { type FSWatcher } from 'chokidar'
@@ -143,6 +143,17 @@ export function registerFsHandlers(): void {
     return target
   })
 
+  ipcMain.handle('fs:move', async (_event, src: string, destDir: string): Promise<string> => {
+    const target = join(destDir, basename(src))
+    if (target === src) return src
+    // Empêche de déplacer un dossier dans lui-même ou l'un de ses descendants.
+    if (destDir === src || destDir.startsWith(src + '/')) {
+      throw new Error('cannot move into itself')
+    }
+    await fsp.rename(src, target)
+    return target
+  })
+
   ipcMain.handle('fs:delete', async (_event, path: string): Promise<void> => {
     await shell.trashItem(path)
   })
@@ -164,4 +175,22 @@ export function registerFsHandlers(): void {
     recentWrites.set(path, Date.now())
     await fsp.writeFile(path, content, 'utf-8')
   })
+
+  // Enregistrer sous (note « sans titre ») : boîte de dialogue puis écriture.
+  ipcMain.handle(
+    'fs:saveAs',
+    async (event, defaultName: string, content: string): Promise<string | null> => {
+      const win = BrowserWindow.fromWebContents(event.sender) ?? undefined
+      const result = await dialog.showSaveDialog(win!, {
+        defaultPath: defaultName,
+        filters: [{ name: 'Markdown', extensions: ['md'] }]
+      })
+      if (result.canceled || !result.filePath) return null
+      let target = result.filePath
+      if (!/\.[^./]+$/.test(target)) target += '.md'
+      recentWrites.set(target, Date.now())
+      await fsp.writeFile(target, content, 'utf-8')
+      return target
+    }
+  )
 }
