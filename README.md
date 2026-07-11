@@ -12,16 +12,9 @@ Stanote réunit trois outils que vous jonglez toute la journée : un éditeur ma
 ## Aperçu
 
 <div align="center">
-  <img src="assets/screenshots/apercu.png" alt="Aperçu de Stanote" width="820" />
+  <img src="assets/screenshots/apercu.png" alt="Stanote — éditeur et terminal, thème sombre" width="49%" />
+  <img src="assets/screenshots/apercu2.png" alt="Stanote — disposition barre latérale, thème clair" width="49%" />
 </div>
-
-<!-- Vous pouvez ajouter d'autres captures ici, par ex. :
-<div align="center">
-  <img src="assets/screenshots/editeur.png" alt="Éditeur" width="270" />
-  <img src="assets/screenshots/terminal.png" alt="Terminal" width="270" />
-  <img src="assets/screenshots/dispositions.png" alt="Dispositions" width="270" />
-</div>
--->
 
 ## Fonctionnalités
 
