@@ -40,7 +40,14 @@ const dict = {
     layoutEditorRight: 'Éditeur à droite',
     layoutSidebar: 'Barre latérale',
     discardUntitled: 'Fermer cette note sans l’enregistrer ?',
-    untitled: 'note non enregistrée'
+    untitled: 'note non enregistrée',
+    findPlaceholder: 'Rechercher…',
+    replaceWith: 'Remplacer par…',
+    replace: 'Remplacer',
+    replaceAll: 'Tout remplacer',
+    findPrev: 'Occurrence précédente (Maj+Entrée)',
+    findNext: 'Occurrence suivante (Entrée)',
+    findClose: 'Fermer (Échap)'
   },
   en: {
     files: 'Files',
@@ -79,7 +86,14 @@ const dict = {
     layoutEditorRight: 'Editor right',
     layoutSidebar: 'Sidebar',
     discardUntitled: 'Close this note without saving?',
-    untitled: 'unsaved note'
+    untitled: 'unsaved note',
+    findPlaceholder: 'Find…',
+    replaceWith: 'Replace with…',
+    replace: 'Replace',
+    replaceAll: 'Replace all',
+    findPrev: 'Previous match (Shift+Enter)',
+    findNext: 'Next match (Enter)',
+    findClose: 'Close (Esc)'
   }
 } as const
 

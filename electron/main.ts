@@ -1,6 +1,25 @@
-import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, net, protocol, shell } from 'electron'
 import { promises as fsp } from 'fs'
 import { join } from 'path'
+import { pathToFileURL } from 'url'
+
+// Protocole interne servant les fichiers du disque à la visionneuse HTML :
+// une iframe `stanote-file://local/<chemin>` a une vraie URL de base, donc les
+// CSS/images/polices en chemins relatifs du document se chargent (impossible
+// avec srcDoc). À déclarer avant app.whenReady.
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: 'stanote-file',
+    privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true }
+  }
+])
+
+function registerFileProtocol(): void {
+  protocol.handle('stanote-file', (request) => {
+    const { pathname } = new URL(request.url)
+    return net.fetch(pathToFileURL(decodeURIComponent(pathname)).toString())
+  })
+}
 import { registerFsHandlers, disposeFsForWebContents } from './fs'
 import { registerPtyHandlers, disposePtyForWebContents } from './pty'
 import { registerSearchHandlers, disposeSearchForWebContents } from './search'
@@ -103,6 +122,7 @@ app.on('open-file', (event, path) => {
 })
 
 app.whenReady().then(() => {
+  registerFileProtocol()
   registerFsHandlers()
   registerPtyHandlers()
   registerSearchHandlers()

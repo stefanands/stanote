@@ -2,9 +2,15 @@ import { useRef } from 'react'
 import { useTabs, type Tab } from '../stores/tabs'
 import { useT } from '../i18n'
 
-/** Onglets logés dans la barre de titre, à droite du wordmark.
- *  Réordonnançables au glisser (réordonnancement en direct pendant le survol). */
-export default function TabBar(): JSX.Element | null {
+interface Props {
+  /** 'titlebar' : logés dans la barre de titre (vue éditeur à gauche) ;
+   *  'pane' : bandeau en haut du panneau éditeur (autres vues). */
+  variant: 'titlebar' | 'pane'
+}
+
+/** Onglets réordonnançables au glisser (déplacement au franchissement du
+ *  point médian de l'onglet survolé). */
+export default function TabBar({ variant }: Props): JSX.Element | null {
   const t = useT()
   const { tabs, activePath, activate, closeTab, reorderTab } = useTabs()
   const dragging = useRef<string | null>(null)
@@ -18,7 +24,7 @@ export default function TabBar(): JSX.Element | null {
 
   return (
     <div
-      className="titlebar-tabs"
+      className={variant === 'titlebar' ? 'titlebar-tabs' : 'tabbar'}
       // Accepte le dépôt partout dans la barre (y compris l'espace vide et
       // l'onglet déplacé lui-même), sinon le navigateur joue l'animation de
       // retour du fantôme vers la position d'origine.

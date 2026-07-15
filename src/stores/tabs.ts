@@ -42,14 +42,16 @@ interface TabsState {
 const AUTOSAVE_DELAY_MS = 500
 const saveTimers = new Map<string, ReturnType<typeof setTimeout>>()
 
-const EDITABLE = /\.(md|markdown|txt)$/i
-export const isEditable = (path: string): boolean => EDITABLE.test(path)
+const MARKDOWN = /\.(md|markdown|txt)$/i
+const CODE = /\.(json|ya?ml)$/i
+export const isEditable = (path: string): boolean => MARKDOWN.test(path) || CODE.test(path)
 
-export type FileKind = 'markdown' | 'pdf' | 'image' | 'html' | 'other'
+export type FileKind = 'markdown' | 'code' | 'pdf' | 'image' | 'html' | 'other'
 
 export function fileKind(path: string): FileKind {
   const p = path.toLowerCase()
-  if (EDITABLE.test(p)) return 'markdown'
+  if (MARKDOWN.test(p)) return 'markdown'
+  if (CODE.test(p)) return 'code'
   if (p.endsWith('.pdf')) return 'pdf'
   if (/\.(png|jpe?g|gif|webp|svg|bmp|ico|avif)$/.test(p)) return 'image'
   if (/\.(html?|htm)$/.test(p)) return 'html'

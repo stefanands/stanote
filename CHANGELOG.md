@@ -8,18 +8,28 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+* Find & replace in the current note (`⌘F`): floating bar with match count,
+  highlighted occurrences, replace / replace all.
+
+* Lightweight code editor for `.json` / `.yaml` files (syntax highlighting,
+  line numbers, same auto-save and conflict handling as markdown, built-in
+  find & replace).
+
 * "Copy path" button in the title bar (icon flips to a check on copy) and a
   "Copy path" entry in the file tree's context menu.
-
-* Tabs can be reordered by dragging.
 
 * File tree: per-type icons — open/closed folder, text, image, and code
   documents.
 
 ### Changed
 
-* Tabs now live in the title bar, next to the "stanote" wordmark; the editor
-  gets the full pane height. Tab names use the system font.
+* Tabs now live in the title bar, next to the "stanote" wordmark (editor-left
+  layout; other layouts keep them above the editor); they can be reordered by
+  dragging and use the system font.
+
+* HTML preview: relative stylesheets, images and fonts of the previewed file
+  now load (served through an internal file protocol); the preview sits in a
+  rounded card like the other panes.
 
 * File tree: chevrons removed — a folder's open/closed state shows on its icon.
 

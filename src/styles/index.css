@@ -569,7 +569,14 @@ body {
   filter: brightness(1.1);
 }
 
-/* Onglets — logés dans la barre de titre, style souligné minimal (sans boîte) */
+/* Réserve l'espace central de la barre de titre quand les onglets sont
+   affichés dans le panneau éditeur (vues éditeur à droite / barre latérale). */
+.titlebar-spacer {
+  flex: 1;
+}
+
+/* Onglets — style souligné minimal (sans boîte).
+   Variante barre de titre (vue éditeur à gauche)… */
 .titlebar-tabs {
   flex: 1;
   min-width: 0;
@@ -583,6 +590,30 @@ body {
 
 .titlebar-tabs::-webkit-scrollbar {
   display: none;
+}
+
+/* …et variante bandeau en haut du panneau éditeur (autres vues). */
+.tabbar {
+  display: flex;
+  align-items: stretch;
+  overflow-x: auto;
+  background: var(--bg);
+  border-bottom: 1px solid var(--card-border);
+  flex-shrink: 0;
+  scrollbar-width: none;
+  padding: 0 6px;
+}
+
+.tabbar::-webkit-scrollbar {
+  display: none;
+}
+
+.tabbar .tab {
+  padding: 9px 14px 10px;
+}
+
+.tabbar .tab.active::after {
+  bottom: -1px;
 }
 
 .tab {
@@ -718,12 +749,162 @@ body {
   font-weight: 700;
 }
 
-/* Visionneuse (PDF / HTML / image) */
+/* Enveloppe de l'éditeur markdown : accueille la barre de recherche flottante */
+.milkdown-wrap {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Barre chercher/remplacer (Cmd+F) */
+.find-bar {
+  position: absolute;
+  top: 8px;
+  right: 20px;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.22);
+}
+
+.find-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.find-chevron {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 24px;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: transform 0.12s ease;
+}
+
+.find-chevron.open {
+  transform: rotate(90deg);
+}
+
+.find-chevron:hover {
+  color: var(--text);
+}
+
+.find-chevron-spacer {
+  width: 18px;
+  flex-shrink: 0;
+}
+
+.find-input {
+  width: 180px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text);
+  font-size: 12px;
+  padding: 4px 7px;
+  outline: none;
+}
+
+.find-input:focus {
+  border-color: var(--accent);
+}
+
+.find-count {
+  min-width: 20px;
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.find-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: transparent;
+  border: none;
+  border-radius: 5px;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+
+.find-nav:hover {
+  color: var(--text);
+  background: var(--hover);
+}
+
+.find-nav.prev svg {
+  transform: rotate(-90deg);
+}
+
+.find-nav.next svg {
+  transform: rotate(90deg);
+}
+
+.find-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text);
+  font-size: 11px;
+  padding: 4px 8px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.find-btn:hover {
+  background: var(--hover);
+  border-color: var(--text-dim);
+}
+
+/* Surlignage des occurrences (plugin prosemirror-search) */
+.milkdown-host .ProseMirror-search-match {
+  background: var(--mark);
+  border-radius: 2px;
+}
+
+.milkdown-host .ProseMirror-active-search-match {
+  background: var(--accent);
+  color: var(--accent-contrast);
+  border-radius: 2px;
+}
+
+/* Éditeur de code (CodeMirror — json/yaml) */
+.code-host {
+  flex: 1;
+  min-height: 0;
+  user-select: text;
+  padding: 8px 12px 0 4px;
+}
+
+.code-host .cm-editor {
+  height: 100%;
+}
+
+/* Visionneuse (PDF / HTML / image) — en carte arrondie, comme l'arbre et le
+   terminal ; sans ça l'iframe blanche part à nu du haut du panneau depuis que
+   les onglets ont rejoint la barre de titre. */
 .doc-viewer {
   flex: 1;
   min-height: 0;
-  width: 100%;
-  border: none;
+  width: auto;
+  margin: 2px;
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
   background: #fff;
 }
 

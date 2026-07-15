@@ -15,7 +15,7 @@ import {
   restoreLastFolder,
   useWorkspace
 } from './stores/workspace'
-import { useTabs } from './stores/tabs'
+import { fileKind, useTabs } from './stores/tabs'
 import { useUi, type Layout } from './stores/ui'
 import { useTheme } from './stores/theme'
 import { useFont, applyFont, FONT_PAIRS } from './stores/font'
@@ -204,6 +204,16 @@ export default function App(): JSX.Element {
         e.preventDefault()
         useUi.getState().setSidebarView('search')
         setShowExplorer(() => true)
+      } else if (mod && !e.shiftKey && e.key.toLowerCase() === 'f') {
+        // Chercher/remplacer dans la note markdown active. Les fichiers code
+        // (CodeMirror) gèrent leur propre Cmd+F intégré.
+        const { tabs, activePath } = useTabs.getState()
+        const tab = tabs.find((t) => t.path === activePath)
+        const kind = tab ? (tab.untitled ? 'markdown' : fileKind(tab.path)) : 'other'
+        if (kind === 'markdown') {
+          e.preventDefault()
+          useUi.getState().setFindOpen(!useUi.getState().findOpen)
+        }
       } else if (mod && !e.shiftKey && e.key.toLowerCase() === 'p') {
         e.preventDefault()
         useUi.getState().setQuickOpen(!useUi.getState().quickOpen)
@@ -319,7 +329,7 @@ export default function App(): JSX.Element {
     <div className="app">
       <div className="titlebar">
         <span className="titlebar-title">stanote</span>
-        <TabBar />
+        {layout === 'editor-left' ? <TabBar variant="titlebar" /> : <span className="titlebar-spacer" />}
         <div className="titlebar-actions">
           <button className="tbar-btn" title={t('copyPath')} onClick={onCopyPath}>
             <Icon name={copied ? 'check' : 'copy'} />

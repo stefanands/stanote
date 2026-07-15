@@ -1,8 +1,13 @@
 import { useEffect, useRef } from 'react'
 import { Crepe } from '@milkdown/crepe'
+import { editorViewCtx, prosePluginsCtx } from '@milkdown/kit/core'
+import type { EditorView } from '@milkdown/prose/view'
+import { search } from 'prosemirror-search'
 import '@milkdown/crepe/theme/common/style.css'
 import { crepeFeatureConfigs } from './crepeText'
+import { useUi } from '../../stores/ui'
 import type { Locale } from '../../i18n'
+import FindBar from './FindBar'
 
 interface Props {
   initialValue: string
@@ -15,12 +20,20 @@ export default function MilkdownEditor({ initialValue, locale, onChange }: Props
   const onChangeRef = useRef(onChange)
   onChangeRef.current = onChange
   const readyRef = useRef(false)
+  const crepeRef = useRef<Crepe | null>(null)
+  const findOpen = useUi((s) => s.findOpen)
 
   useEffect(() => {
     const crepe = new Crepe({
       root: rootRef.current!,
       defaultValue: initialValue,
       featureConfigs: crepeFeatureConfigs(locale)
+    })
+    crepeRef.current = crepe
+
+    // Plugin chercher/remplacer (surlignage des occurrences), piloté par FindBar.
+    crepe.editor.config((ctx) => {
+      ctx.update(prosePluginsCtx, (plugins) => [...plugins, search()])
     })
 
     crepe.on((listener) => {
@@ -41,6 +54,7 @@ export default function MilkdownEditor({ initialValue, locale, onChange }: Props
 
     return () => {
       disposed = true
+      crepeRef.current = null
       try {
         void crepe.destroy()
       } catch {
@@ -52,5 +66,19 @@ export default function MilkdownEditor({ initialValue, locale, onChange }: Props
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  return <div className="milkdown-host" ref={rootRef} />
+  const getView = (): EditorView | null => {
+    if (!readyRef.current || !crepeRef.current) return null
+    try {
+      return crepeRef.current.editor.ctx.get(editorViewCtx)
+    } catch {
+      return null
+    }
+  }
+
+  return (
+    <div className="milkdown-wrap">
+      {findOpen && <FindBar getView={getView} onClose={() => useUi.getState().setFindOpen(false)} />}
+      <div className="milkdown-host" ref={rootRef} />
+    </div>
+  )
 }

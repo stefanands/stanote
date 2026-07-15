@@ -16,6 +16,17 @@ function imageMime(path: string): string {
 }
 
 /** Aperçu en lecture seule des fichiers non-markdown (PDF, image, HTML). */
+/** Injecte une balise <base> pointant vers le dossier du fichier (via le
+ *  protocole interne stanote-file) : les css/images/polices en chemins
+ *  relatifs du document se chargent, sans navigation de l'iframe vers une
+ *  URL personnalisée (que macOS tenterait d'ouvrir comme app externe). */
+function withBase(html: string, path: string): string {
+  const dir = path.slice(0, path.lastIndexOf('/'))
+  const base = `<base href="stanote-file://local${encodeURI(dir)}/">`
+  if (/<head[^>]*>/i.test(html)) return html.replace(/<head[^>]*>/i, (m) => m + base)
+  return base + html
+}
+
 export default function DocumentViewer({ path, kind }: { path: string; kind: Kind }): JSX.Element {
   const [url, setUrl] = useState<string | null>(null)
   const [html, setHtml] = useState<string | null>(null)
@@ -26,7 +37,7 @@ export default function DocumentViewer({ path, kind }: { path: string; kind: Kin
 
     if (kind === 'html') {
       void window.stancode.fs.readFile(path).then((content) => {
-        if (!cancelled) setHtml(content)
+        if (!cancelled) setHtml(withBase(content, path))
       })
     } else {
       void window.stancode.fs.readBinary(path).then((bytes) => {
