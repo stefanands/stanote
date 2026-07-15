@@ -24,6 +24,9 @@ export type IconName =
   | 'file-text'
   | 'file-image'
   | 'file-code'
+  | 'sparkle'
+  | 'send'
+  | 'stop'
 
 const paths: Record<IconName, JSX.Element> = {
   chevron: <polyline points="6 3.5 10.5 8 6 12.5" />,
@@ -90,6 +93,22 @@ const paths: Record<IconName, JSX.Element> = {
     </>
   ),
   check: <polyline points="3 8.5 6.5 12 13 4.5" />,
+  sparkle: (
+    // Étoile Claude : 8 branches, trait épais (indépendant du trait global)
+    <g strokeWidth={1.8}>
+      <line x1="8" y1="1.8" x2="8" y2="14.2" />
+      <line x1="1.8" y1="8" x2="14.2" y2="8" />
+      <line x1="3.6" y1="3.6" x2="12.4" y2="12.4" />
+      <line x1="12.4" y1="3.6" x2="3.6" y2="12.4" />
+    </g>
+  ),
+  send: (
+    <>
+      <line x1="8" y1="13" x2="8" y2="3.5" />
+      <polyline points="4 7.5 8 3.5 12 7.5" />
+    </>
+  ),
+  stop: <rect x="4.5" y="4.5" width="7" height="7" rx="1" />,
   folder: <path d="M2 4h4l1.3 1.6H14v7.4H2z" />,
   'folder-open': (
     <>

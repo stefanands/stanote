@@ -23,6 +23,7 @@ function registerFileProtocol(): void {
 import { registerFsHandlers, disposeFsForWebContents } from './fs'
 import { registerPtyHandlers, disposePtyForWebContents } from './pty'
 import { registerSearchHandlers, disposeSearchForWebContents } from './search'
+import { registerClaudeHandlers, disposeClaudeForWebContents } from './claude'
 import { registerContextMenu } from './contextMenu'
 import { setupMenu } from './menu'
 
@@ -96,6 +97,7 @@ export function createWindow(opts: WindowOpts = {}): void {
     disposeFsForWebContents(id)
     disposePtyForWebContents(id)
     disposeSearchForWebContents(id)
+    disposeClaudeForWebContents(id)
   })
 
   win.webContents.setWindowOpenHandler(({ url }) => {
@@ -126,6 +128,7 @@ app.whenReady().then(() => {
   registerFsHandlers()
   registerPtyHandlers()
   registerSearchHandlers()
+  registerClaudeHandlers()
   registerPdfHandler()
   setupMenu({ onNewWindow: () => createWindow({ isNew: true }) })
   ready = true

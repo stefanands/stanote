@@ -27,6 +27,7 @@
   --overlay: rgba(0, 0, 0, 0.5);
   --warn-bg: #2a2d2e;
   --warn-fg: #d0c08a;
+  --claude: #d97757; /* orange terracotta Claude */
   --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
   --font-body: 'Optima', 'Segoe UI', system-ui, sans-serif;
   --font-title: 'Didot', 'Bodoni 72', Georgia, serif;
@@ -947,6 +948,214 @@ body {
    cas (ex. reste de ligne non couvert par les rangées lors du redimensionnement). */
 .terminal-host .xterm-viewport {
   background-color: transparent !important;
+}
+
+/* Demander à Claude — mode du panneau terminal */
+.pane-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Titre « CLAUDE » et icône ✳ en orange Claude */
+.claude-title {
+  color: var(--claude);
+  font-weight: 700;
+}
+
+.claude-btn svg,
+.claude-btn:hover svg {
+  color: var(--claude);
+}
+
+.claude-pulse svg {
+  animation: claude-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes claude-pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.claude-pane {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.claude-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  user-select: text;
+  /* colonne de lecture : bornée et centrée quand le panneau est très large */
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.claude-msg {
+  font-size: 12.5px;
+  line-height: 1.55;
+  max-width: 100%;
+  overflow-wrap: break-word;
+}
+
+.claude-msg.user {
+  align-self: flex-end;
+  background: var(--selected);
+  border-radius: 10px 10px 3px 10px;
+  padding: 6px 10px;
+  white-space: pre-wrap;
+  max-width: 85%;
+}
+
+.claude-msg.assistant p,
+.claude-msg.assistant ul,
+.claude-msg.assistant ol,
+.claude-msg.assistant pre,
+.claude-msg.assistant blockquote {
+  margin: 0 0 8px;
+}
+
+.claude-msg.assistant :last-child {
+  margin-bottom: 0;
+}
+
+.claude-msg.assistant code {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  background: var(--hover);
+  border-radius: 3px;
+  padding: 0.5px 4px;
+}
+
+.claude-msg.assistant pre {
+  background: var(--hover);
+  border-radius: 6px;
+  padding: 8px 10px;
+  overflow-x: auto;
+}
+
+.claude-msg.assistant pre code {
+  background: none;
+  padding: 0;
+}
+
+.claude-msg.assistant h1,
+.claude-msg.assistant h2,
+.claude-msg.assistant h3 {
+  font-size: 13px;
+  margin: 4px 0 6px;
+}
+
+/* Fenêtre minimale : pas de traits internes en mode Claude */
+.terminal-pane.claude-mode .pane-header {
+  border-bottom: none;
+}
+
+/* Trace d'activité, repliée derrière un chevron */
+.claude-tools-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  padding: 0;
+  font-size: 11.5px;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+
+.claude-tools-toggle:hover {
+  color: var(--text);
+}
+
+.claude-tools-toggle svg {
+  color: var(--claude);
+}
+
+.claude-tools-chevron {
+  display: flex;
+  transition: transform 0.12s ease;
+}
+
+.claude-tools-chevron svg {
+  color: var(--text-dim);
+}
+
+.claude-tools-chevron.open {
+  transform: rotate(90deg);
+}
+
+.claude-tools-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 6px 0 0 22px;
+}
+
+.claude-msg.tool {
+  font-size: 11.5px;
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+}
+
+.claude-status {
+  font-size: 11.5px;
+  color: var(--text-dim);
+  animation: claude-pulse 1.4s ease-in-out infinite;
+}
+
+.claude-input-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  padding: 8px 10px 10px;
+  flex-shrink: 0;
+  /* colonne alignée sur celle du fil */
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.claude-input {
+  flex: 1;
+  min-width: 0;
+  resize: none;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font: inherit;
+  font-size: 12.5px;
+  line-height: 1.45;
+  padding: 6px 9px;
+  outline: none;
+}
+
+.claude-input:focus {
+  border-color: var(--accent);
+}
+
+.claude-send {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 30px;
+  border-radius: 7px;
+  flex-shrink: 0;
+}
+
+.claude-send:hover {
+  background: var(--hover);
 }
 
 /* Boutons de la barre de statut (police, thème, langue) */

@@ -17,3 +17,10 @@ export interface SearchMatch {
   line: number
   text: string
 }
+
+/** Événements du flux « Demander à Claude » (CLI headless → renderer). */
+export type ClaudeEvent =
+  | { type: 'delta'; text: string }
+  | { type: 'tool'; name: string; detail?: string }
+  | { type: 'done'; isError: boolean }
+  | { type: 'error'; message: string }

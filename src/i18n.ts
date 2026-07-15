@@ -47,7 +47,19 @@ const dict = {
     replaceAll: 'Tout remplacer',
     findPrev: 'Occurrence précédente (Maj+Entrée)',
     findNext: 'Occurrence suivante (Entrée)',
-    findClose: 'Fermer (Échap)'
+    findClose: 'Fermer (Échap)',
+    claude: 'Claude',
+    askClaude: 'Demander à Claude',
+    backToTerminal: 'Revenir au terminal',
+    claudeNew: 'Nouvelle conversation',
+    claudePlaceholder: 'Demande quelque chose sur ce dossier…',
+    claudeSend: 'Envoyer (Entrée)',
+    claudeStop: 'Arrêter la réponse',
+    claudeThinking: 'Claude réfléchit…',
+    claudeTool: 'Claude {tool}…',
+    claudeActions: '{n} action(s)',
+    claudeEmpty: 'Claude peut lire et modifier les fichiers du dossier ouvert.',
+    claudeMissing: 'CLI « claude » introuvable — installe Claude Code puis relance Stanote.'
   },
   en: {
     files: 'Files',
@@ -93,7 +105,19 @@ const dict = {
     replaceAll: 'Replace all',
     findPrev: 'Previous match (Shift+Enter)',
     findNext: 'Next match (Enter)',
-    findClose: 'Close (Esc)'
+    findClose: 'Close (Esc)',
+    claude: 'Claude',
+    askClaude: 'Ask Claude',
+    backToTerminal: 'Back to terminal',
+    claudeNew: 'New conversation',
+    claudePlaceholder: 'Ask anything about this folder…',
+    claudeSend: 'Send (Enter)',
+    claudeStop: 'Stop the response',
+    claudeThinking: 'Claude is thinking…',
+    claudeTool: 'Claude is using {tool}…',
+    claudeActions: '{n} action(s)',
+    claudeEmpty: 'Claude can read and edit the files in the open folder.',
+    claudeMissing: '"claude" CLI not found — install Claude Code, then relaunch Stanote.'
   }
 } as const
 

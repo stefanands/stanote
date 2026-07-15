@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer, webUtils, type IpcRendererEvent } from 'electron'
-import type { SearchMatch, TreeNode, WorkspaceInfo } from '../shared/types'
+import type { ClaudeEvent, SearchMatch, TreeNode, WorkspaceInfo } from '../shared/types'
 
 function on<T>(channel: string, cb: (payload: T) => void): () => void {
   const listener = (_event: IpcRendererEvent, payload: T): void => cb(payload)
@@ -31,6 +31,15 @@ const api = {
   search: {
     query: (root: string, query: string): Promise<SearchMatch[]> =>
       ipcRenderer.invoke('search:query', root, query)
+  },
+  claude: {
+    available: (): Promise<boolean> => ipcRenderer.invoke('claude:available'),
+    send: (prompt: string, cwd: string): Promise<void> =>
+      ipcRenderer.invoke('claude:send', prompt, cwd),
+    cancel: (): Promise<void> => ipcRenderer.invoke('claude:cancel'),
+    reset: (): Promise<void> => ipcRenderer.invoke('claude:reset'),
+    onEvent: (cb: (event: ClaudeEvent) => void): (() => void) =>
+      on<ClaudeEvent>('claude:event', cb)
   },
   pdf: {
     export: (html: string, defaultName: string): Promise<boolean> =>

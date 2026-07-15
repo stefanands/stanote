@@ -62,6 +62,17 @@ export function fitTerminal(): void {
   if (el && el.clientWidth > 40 && el.clientHeight > 40) fit?.fit()
 }
 
+/** À la ré-attache (retour du mode Claude, changement de disposition) :
+ *  recale la grille et force un rendu complet, sinon l'affichage peut rester
+ *  vide jusqu'au prochain redimensionnement. */
+export function refreshTerminal(): void {
+  fitTerminal()
+  if (term) {
+    term.refresh(0, term.rows - 1)
+    term.scrollToBottom()
+  }
+}
+
 export function spawnTerminalIfNeeded(): void {
   if (spawned || !term) return
   spawned = true

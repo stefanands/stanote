@@ -8,6 +8,11 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+* "Ask Claude": the terminal panel can switch to an in-app conversation with
+  Claude (headless `claude` CLI, streaming answers, continued sessions, Claude
+  can read and edit the files of the open folder; activity trace collapsed
+  behind a chevron; always uses the best available Sonnet model).
+
 * Find & replace in the current note (`⌘F`): floating bar with match count,
   highlighted occurrences, replace / replace all.
 

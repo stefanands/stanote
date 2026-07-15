@@ -1,27 +1,30 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useWorkspace } from '../../stores/workspace'
 import { useTheme } from '../../stores/theme'
+import { useClaude } from '../../stores/claude'
 import { useT } from '../../i18n'
 import Icon from '../Icon'
+import ClaudePane from './ClaudePane'
 import {
   getTerminalHost,
   detachTerminalHost,
-  fitTerminal,
+  refreshTerminal,
   spawnTerminalIfNeeded,
   restartTerminal,
   setTerminalTheme
 } from './terminalHost'
 
-export default function TerminalPane(): JSX.Element {
+/* L'hôte xterm survit au démontage (module singleton) : basculer en mode
+   Claude et revenir ne perd ni le shell ni son historique. */
+function TerminalHostSlot(): JSX.Element {
   const t = useT()
   const rootPath = useWorkspace((s) => s.rootPath)
-  const theme = useTheme((s) => s.theme)
   const slotRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const host = getTerminalHost(useTheme.getState().theme, t('terminalExited'))
     slotRef.current!.appendChild(host)
-    requestAnimationFrame(fitTerminal)
+    requestAnimationFrame(refreshTerminal)
 
     // Démarre le shell : dès qu'un dossier est connu, sinon après un court délai
     // (le temps que la restauration fixe le dossier courant). Idempotent.
@@ -36,17 +39,58 @@ export default function TerminalPane(): JSX.Element {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  return <div className="terminal-slot" ref={slotRef} />
+}
+
+export default function TerminalPane(): JSX.Element {
+  const t = useT()
+  const theme = useTheme((s) => s.theme)
+  const [mode, setMode] = useState<'terminal' | 'claude'>('terminal')
+  const claudeBusy = useClaude((s) => s.busy)
+
   useEffect(() => setTerminalTheme(theme), [theme])
 
   return (
-    <div className="pane terminal-pane">
+    <div className={mode === 'claude' ? 'pane terminal-pane claude-mode' : 'pane terminal-pane'}>
       <div className="pane-header filetree-header">
-        <span>{t('terminal')}</span>
-        <button className="icon-btn" title={t('restartTerminal')} onClick={restartTerminal}>
-          <Icon name="refresh" size={14} />
-        </button>
+        <span className={mode === 'claude' ? 'claude-title' : ''}>
+          {mode === 'terminal' ? t('terminal') : t('claude')}
+        </span>
+        <span className="pane-header-actions">
+          {mode === 'terminal' ? (
+            <>
+              <button className="icon-btn" title={t('restartTerminal')} onClick={restartTerminal}>
+                <Icon name="refresh" size={17} />
+              </button>
+              <button
+                className={claudeBusy ? 'icon-btn claude-btn claude-pulse' : 'icon-btn claude-btn'}
+                title={t('askClaude')}
+                onClick={() => setMode('claude')}
+              >
+                <Icon name="sparkle" size={17} />
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                className="icon-btn"
+                title={t('claudeNew')}
+                onClick={() => useClaude.getState().reset()}
+              >
+                <Icon name="file-plus" size={17} />
+              </button>
+              <button
+                className="icon-btn"
+                title={t('backToTerminal')}
+                onClick={() => setMode('terminal')}
+              >
+                <Icon name="terminal" size={17} />
+              </button>
+            </>
+          )}
+        </span>
       </div>
-      <div className="terminal-slot" ref={slotRef} />
+      {mode === 'terminal' ? <TerminalHostSlot /> : <ClaudePane />}
     </div>
   )
 }
