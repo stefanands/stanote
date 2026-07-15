@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import type { TreeNode } from '../../../shared/types'
 import { openFolderDialog, useWorkspace } from '../../stores/workspace'
-import { useTabs } from '../../stores/tabs'
+import { fileKind, useTabs } from '../../stores/tabs'
 import { useT } from '../../i18n'
-import Icon from '../Icon'
+import Icon, { type IconName } from '../Icon'
 
 interface ContextMenuState {
   x: number
@@ -21,6 +21,18 @@ interface EditingState {
 /** Ajoute .md si aucune extension n'est fournie (nouveau fichier = markdown par défaut). */
 function ensureExtension(name: string): string {
   return /\.[^./]+$/.test(name) ? name : `${name}.md`
+}
+
+const CODE_EXT = /\.(json|ya?ml|toml|xml|[jt]sx?|css|scss|sh|zsh|py|rb|go|rs|swift|sql)$/i
+
+/** Icône selon le type : dossier ouvert/fermé, ou famille du fichier. */
+function iconFor(node: TreeNode, open: boolean): IconName {
+  if (node.type === 'dir') return open ? 'folder-open' : 'folder'
+  const kind = fileKind(node.path)
+  if (kind === 'markdown') return 'file-text'
+  if (kind === 'image') return 'file-image'
+  if (kind === 'html' || CODE_EXT.test(node.path)) return 'file-code'
+  return 'file'
 }
 
 export default function FileTree(): JSX.Element {
@@ -116,6 +128,12 @@ export default function FileTree(): JSX.Element {
     const node = menu?.node
     setMenu(null)
     if (node) void window.stancode.fs.reveal(node.path)
+  }
+
+  const doCopyPath = (): void => {
+    const node = menu?.node
+    setMenu(null)
+    if (node) void navigator.clipboard.writeText(node.path)
   }
 
   const submitEditing = async (value: string): Promise<void> => {
@@ -215,7 +233,6 @@ export default function FileTree(): JSX.Element {
         {editing && editing.mode !== 'rename' && editing.targetPath === rootPath && (
           <EditRow
             depth={0}
-            showChevron={false}
             initial={editing.initial}
             onSubmit={submitEditing}
             onCancel={() => setEditing(null)}
@@ -239,6 +256,10 @@ export default function FileTree(): JSX.Element {
               <button onClick={() => menu.node && startRenameNode(menu.node)}>
                 <Icon name="rename" size={15} />
                 <span>{t('rename')}</span>
+              </button>
+              <button onClick={doCopyPath}>
+                <Icon name="copy" size={15} />
+                <span>{t('copyPath')}</span>
               </button>
               <button onClick={doReveal}>
                 <Icon name="reveal" size={15} />
@@ -308,7 +329,6 @@ function TreeLevel(props: TreeLevelProps): JSX.Element {
             <EditRow
               key={node.path}
               depth={depth}
-              showChevron={node.type === 'dir'}
               initial={editing.initial}
               onSubmit={onSubmit}
               onCancel={onCancel}
@@ -360,10 +380,8 @@ function TreeLevel(props: TreeLevelProps): JSX.Element {
               onContextMenu={(e) => onMenu(e, node)}
               title={node.path}
             >
-              <span
-                className={`tree-chevron ${node.type === 'dir' && expanded.has(node.path) ? 'open' : ''}`}
-              >
-                {node.type === 'dir' ? <Icon name="chevron" size={14} /> : null}
+              <span className="tree-icon">
+                <Icon name={iconFor(node, expanded.has(node.path))} size={15} />
               </span>
               <span className="tree-name">{node.name}</span>
             </div>
@@ -373,7 +391,6 @@ function TreeLevel(props: TreeLevelProps): JSX.Element {
                 {editing && editing.mode !== 'rename' && editing.targetPath === node.path && (
                   <EditRow
                     depth={depth + 1}
-                    showChevron={false}
                     initial={editing.initial}
                     onSubmit={onSubmit}
                     onCancel={onCancel}
@@ -394,7 +411,6 @@ function parentDirOf(path: string): string {
 
 function EditRow(props: {
   depth: number
-  showChevron: boolean
   initial: string
   onSubmit: (value: string) => void
   onCancel: () => void
@@ -422,7 +438,7 @@ function EditRow(props: {
   }
   return (
     <div className="tree-item editing-row" style={{ paddingLeft: 10 + props.depth * 14 }}>
-      <span className="tree-chevron">{props.showChevron ? <Icon name="chevron" size={14} /> : null}</span>
+      <span className="tree-icon" />
       <input
         ref={ref}
         className="tree-rename-input"

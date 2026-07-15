@@ -16,6 +16,14 @@ export type IconName =
   | 'rename'
   | 'trash'
   | 'reveal'
+  | 'copy'
+  | 'check'
+  | 'folder'
+  | 'folder-open'
+  | 'file'
+  | 'file-text'
+  | 'file-image'
+  | 'file-code'
 
 const paths: Record<IconName, JSX.Element> = {
   chevron: <polyline points="6 3.5 10.5 8 6 12.5" />,
@@ -75,6 +83,50 @@ const paths: Record<IconName, JSX.Element> = {
     </>
   ),
   files: <path d="M2 4h4l1.3 1.6H14v7.4H2z" />,
+  copy: (
+    <>
+      <rect x="5.5" y="5.5" width="8" height="8" rx="1.5" />
+      <path d="M10.5 2.5h-8v8" />
+    </>
+  ),
+  check: <polyline points="3 8.5 6.5 12 13 4.5" />,
+  folder: <path d="M2 4h4l1.3 1.6H14v7.4H2z" />,
+  'folder-open': (
+    <>
+      <path d="M2 13V4h4l1.3 1.6H13v1.9" />
+      <path d="M2 13l1.7-5.5h11L13 13H2z" />
+    </>
+  ),
+  file: (
+    <>
+      <path d="M4 2.5h4.5L12 6v7.5H4z" />
+      <polyline points="8.5 2.5 8.5 6 12 6" />
+    </>
+  ),
+  'file-text': (
+    <>
+      <path d="M4 2.5h4.5L12 6v7.5H4z" />
+      <polyline points="8.5 2.5 8.5 6 12 6" />
+      <line x1="6" y1="8.75" x2="10" y2="8.75" />
+      <line x1="6" y1="11" x2="9" y2="11" />
+    </>
+  ),
+  'file-image': (
+    <>
+      <path d="M4 2.5h4.5L12 6v7.5H4z" />
+      <polyline points="8.5 2.5 8.5 6 12 6" />
+      <circle cx="6.7" cy="8.4" r="0.75" />
+      <path d="M5.5 12l1.9-2.1 1.2 1.3 0.9-1 1.4 1.8" />
+    </>
+  ),
+  'file-code': (
+    <>
+      <path d="M4 2.5h4.5L12 6v7.5H4z" />
+      <polyline points="8.5 2.5 8.5 6 12 6" />
+      <polyline points="6.6 8.2 5.4 9.6 6.6 11" />
+      <polyline points="9.4 8.2 10.6 9.6 9.4 11" />
+    </>
+  ),
   terminal: (
     <>
       <polyline points="3.5 5.5 6.5 8 3.5 10.5" />
@@ -135,7 +187,7 @@ export default function Icon({ name, size = 16 }: Props): JSX.Element {
       viewBox="0 0 16 16"
       fill="none"
       stroke="currentColor"
-      strokeWidth={1.5}
+      strokeWidth={1}
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"

@@ -7,6 +7,7 @@ import TerminalPane from './components/TerminalPane/TerminalPane'
 import SearchPanel from './components/SearchPanel/SearchPanel'
 import QuickOpen from './components/QuickOpen'
 import StatusBar from './components/StatusBar'
+import TabBar from './components/TabBar'
 import Icon, { type IconName } from './components/Icon'
 import {
   openFolderDialog,
@@ -79,6 +80,14 @@ function exportActivePdf(): void {
   void window.stancode.pdf.export(buildPrintHtml(bodyHtml, pair.title, pair.body), name)
 }
 
+/** Copie le chemin du fichier actif (ou du dossier ouvert à défaut). */
+function copyActivePath(): void {
+  const { tabs, activePath } = useTabs.getState()
+  const tab = tabs.find((t) => t.path === activePath)
+  const path = tab && !tab.untitled ? tab.path : useWorkspace.getState().rootPath
+  if (path) void navigator.clipboard.writeText(path)
+}
+
 export default function App(): JSX.Element {
   const t = useT()
   const [showExplorer, setShowExplorer] = usePersistedFlag('stanote:showExplorer', true)
@@ -88,6 +97,13 @@ export default function App(): JSX.Element {
   const theme = useTheme((s) => s.theme)
   const fontIndex = useFont((s) => s.index)
   const [layoutMenu, setLayoutMenu] = useState(false)
+  const [copied, setCopied] = useState(false)
+
+  const onCopyPath = (): void => {
+    copyActivePath()
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1200)
+  }
 
   useEffect(() => {
     document.documentElement.dataset['theme'] = theme
@@ -303,7 +319,11 @@ export default function App(): JSX.Element {
     <div className="app">
       <div className="titlebar">
         <span className="titlebar-title">stanote</span>
+        <TabBar />
         <div className="titlebar-actions">
+          <button className="tbar-btn" title={t('copyPath')} onClick={onCopyPath}>
+            <Icon name={copied ? 'check' : 'copy'} />
+          </button>
           <button
             className={showExplorer ? 'tbar-btn active' : 'tbar-btn'}
             title={t('filesToggleTitle')}

@@ -8,47 +8,13 @@ export default function EditorPane(): JSX.Element {
   const t = useT()
   const locale = useI18n((s) => s.locale)
   const { rootPath } = useWorkspace()
-  const { tabs, activePath, contents, activate, closeTab, updateContent, reloadFromDisk, keepMine } =
-    useTabs()
+  const { tabs, activePath, contents, updateContent, reloadFromDisk, keepMine } = useTabs()
 
   const active = tabs.find((t) => t.path === activePath)
   const kind = active ? (active.untitled ? 'markdown' : fileKind(active.path)) : 'other'
 
-  const requestClose = (tab: (typeof tabs)[number]): void => {
-    if (tab.untitled && tab.dirty && !confirm(t('discardUntitled'))) return
-    void closeTab(tab.path)
-  }
-
   return (
     <div className="pane editor-pane">
-      {tabs.length > 0 && (
-        <div className="tabbar">
-          {tabs.map((tab) => (
-            <div
-              key={tab.path}
-              className={`tab ${tab.path === activePath ? 'active' : ''} ${tab.dirty ? 'dirty' : ''}`}
-              title={tab.untitled ? tab.name : tab.path}
-              onClick={() => activate(tab.path)}
-              onAuxClick={(e) => {
-                if (e.button === 1) requestClose(tab)
-              }}
-            >
-              <span className="tab-name">{tab.name}</span>
-              <span
-                className="tab-indicator"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  requestClose(tab)
-                }}
-              >
-                <span className="tab-dot">●</span>
-                <span className="tab-x">×</span>
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
-
       {active?.conflict && (
         <div className="conflict-banner">
           <span>{t('conflictMsg')}</span>

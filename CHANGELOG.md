@@ -4,62 +4,107 @@ All notable changes to Stanote are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.1.0] — 2026-07-11
-
-### Changed
-
-- Refreshed, flat "floating" interface: solid background, file tree and terminal
-  as rounded cards, borderless floating editor.
-- Minimal underlined tabs in JetBrains Mono; the "stanote" wordmark now uses
-  JetBrains Mono too. The rest of the UI stays on the system font.
-- Light and dark themes reworked to match the new look.
-
-## [1.0.2] — 2026-07-11
+## \[Unreleased]
 
 ### Added
 
-- Drag and drop a file or folder onto another folder to move it (the tree stays
-  alphabetically sorted).
-- Drop a folder (or file) from Finder onto the window to open it.
-- New note (`⌘N`): write first, choose where to save later ("Save As"), even
-  with no folder open.
-- Spelling suggestions in the editor's right-click menu (with "Add to
-  Dictionary"), alongside cut/copy/paste.
-- New files default to the `.md` extension when none is given.
+* "Copy path" button in the title bar (icon flips to a check on copy) and a
+  "Copy path" entry in the file tree's context menu.
+
+* Tabs can be reordered by dragging.
+
+* File tree: per-type icons — open/closed folder, text, image, and code
+  documents.
 
 ### Changed
 
-- Rename now happens **in place** in the tree (no more dialog at the top), and
-  can be triggered by double-clicking an item.
+* Tabs now live in the title bar, next to the "stanote" wordmark; the editor
+  gets the full pane height. Tab names use the system font.
 
-## [1.0.1] — 2026-07-10
+* File tree: chevrons removed — a folder's open/closed state shows on its icon.
+
+* Thinner line icons (stroke 1) across the whole interface.
 
 ### Fixed
 
-- Editor no longer loses focus / jumps to the top while reading or typing in
-  longer notes (auto-save no longer triggers a spurious reload; disk sync now
-  compares content instead of relying on a timing window).
-- Opening a note no longer marks it dirty from initial formatting normalization.
+* The window name shown by Mission Control / App Exposé is now "Stanote"
+  (was still "StanCode").
+
+## \[1.1.0] — 2026-07-11
+
+### Changed
+
+* Refreshed, flat "floating" interface: solid background, file tree and terminal
+  as rounded cards, borderless floating editor.
+
+* Minimal underlined tabs in JetBrains Mono; the "stanote" wordmark now uses
+  JetBrains Mono too. The rest of the UI stays on the system font.
+
+* Light and dark themes reworked to match the new look.
+
+## \[1.0.2] — 2026-07-11
 
 ### Added
 
-- Rename a file/folder from the tree with **F2** or **Enter** (Finder-style).
-- Slightly more breathing room between file-tree items.
+* Drag and drop a file or folder onto another folder to move it (the tree stays
+  alphabetically sorted).
 
-## [1.0.0] — 2026-07-10
+* Drop a folder (or file) from Finder onto the window to open it.
+
+* New note (`⌘N`): write first, choose where to save later ("Save As"), even
+  with no folder open.
+
+* Spelling suggestions in the editor's right-click menu (with "Add to
+  Dictionary"), alongside cut/copy/paste.
+
+* New files default to the `.md` extension when none is given.
+
+### Changed
+
+* Rename now happens **in place** in the tree (no more dialog at the top), and
+  can be triggered by double-clicking an item.
+
+## \[1.0.1] — 2026-07-10
+
+### Fixed
+
+* Editor no longer loses focus / jumps to the top while reading or typing in
+  longer notes (auto-save no longer triggers a spurious reload; disk sync now
+  compares content instead of relying on a timing window).
+
+* Opening a note no longer marks it dirty from initial formatting normalization.
+
+### Added
+
+* Rename a file/folder from the tree with **F2** or **Enter** (Finder-style).
+
+* Slightly more breathing room between file-tree items.
+
+## \[1.0.0] — 2026-07-10
 
 First public release.
 
 ### Added
 
-- WYSIWYG markdown editor (Milkdown) with slash commands, tabs, and auto-save.
-- Integrated terminal (xterm.js + node-pty) opened in the current folder.
-- Silent disk-sync of open files, with a conflict banner for unsaved edits.
-- File browser: tree, create / rename / delete, "Reveal in Finder".
-- Full-text search (ripgrep) and quick-open (`⌘P`).
-- Three layouts (editor left, editor right, sidebar) and multi-window support.
-- Open `.md` files from Finder (file association).
-- Built-in viewer for PDF, image, and HTML files.
-- Export the current note to a formatted PDF.
-- Light (warm white) and dark themes; selectable font pairings.
-- Bilingual interface and menus (French / English).
+* WYSIWYG markdown editor (Milkdown) with slash commands, tabs, and auto-save.
+
+* Integrated terminal (xterm.js + node-pty) opened in the current folder.
+
+* Silent disk-sync of open files, with a conflict banner for unsaved edits.
+
+* File browser: tree, create / rename / delete, "Reveal in Finder".
+
+* Full-text search (ripgrep) and quick-open (`⌘P`).
+
+* Three layouts (editor left, editor right, sidebar) and multi-window support.
+
+* Open `.md` files from Finder (file association).
+
+* Built-in viewer for PDF, image, and HTML files.
+
+* Export the current note to a formatted PDF.
+
+* Light (warm white) and dark themes; selectable font pairings.
+
+* Bilingual interface and menus (French / English).
+

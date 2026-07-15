@@ -35,6 +35,8 @@ interface TabsState {
   /** Remappe les onglets/contenus après un renommage ou déplacement (gère aussi
    *  les fichiers contenus dans un dossier déplacé). */
   handleMoved: (oldPath: string, newPath: string) => void
+  /** Déplace l'onglet `fromPath` avant (ou après) `toPath` (réordonnancement). */
+  reorderTab: (fromPath: string, toPath: string, before: boolean) => void
 }
 
 const AUTOSAVE_DELAY_MS = 500
@@ -246,6 +248,20 @@ export const useTabs = create<TabsState>((set, get) => ({
     // On garde la version locale : le prochain auto-save écrasera le disque.
     set((s) => ({ tabs: patchTab(s.tabs, path, { conflict: false }) }))
     void get().saveNow(path)
+  },
+
+  reorderTab: (fromPath, toPath, before) => {
+    if (fromPath === toPath) return
+    set((s) => {
+      const from = s.tabs.findIndex((t) => t.path === fromPath)
+      if (from < 0 || !s.tabs.some((t) => t.path === toPath)) return s
+      const tabs = [...s.tabs]
+      const [moved] = tabs.splice(from, 1)
+      const insert = tabs.findIndex((t) => t.path === toPath) + (before ? 0 : 1)
+      if (insert === from) return s // même position : ne rien réécrire
+      tabs.splice(insert, 0, moved)
+      return { tabs }
+    })
   },
 
   handleMoved: (oldPath, newPath) => {
