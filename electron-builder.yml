@@ -39,6 +39,10 @@ mac:
     - dmg
   icon: build/icon.icns
   category: public.app-category.productivity
+  # Notarisation Apple quand les identifiants sont présents (CI avec les
+  # secrets APPLE_*) ; ignorée silencieusement en build local non signé.
+  hardenedRuntime: true
+  notarize: true
   # Signature automatique si les certificats Apple sont présents (CI, secret
   # CSC_LINK) ; sinon build non signé. En local, `npm run dist:mac` désactive la
   # découverte d'identité (CSC_IDENTITY_AUTO_DISCOVERY=false) pour rester non signé.
