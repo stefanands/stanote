@@ -1,6 +1,6 @@
 {
   "name": "stanote",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Stanote — éditeur markdown WYSIWYG + terminal + navigateur de fichiers",
   "main": "out/main/main.js",
   "author": "Stefana Andriason <stefana@barnabas-digital.fr>",
