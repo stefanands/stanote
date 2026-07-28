@@ -1,4 +1,5 @@
 import { Crepe } from '@milkdown/crepe'
+import { EditorView } from '@codemirror/view'
 import type { Locale } from '../../i18n'
 
 /** Libellés localisés de l'UI Milkdown/Crepe (menu slash, placeholder, liens,
@@ -52,6 +53,12 @@ export function crepeFeatureConfigs(locale: Locale): NonNullable<
       blockUploadButton: fr ? 'Téléverser un fichier' : 'Upload file',
       blockCaptionPlaceholderText: fr ? 'Légende…' : 'Write a caption…',
       blockUploadPlaceholderText: fr ? "Ou collez le lien de l'image" : 'Or paste image link'
+    },
+    [Crepe.Feature.CodeMirror]: {
+      // Retour à la ligne dans les blocs de code : sans cette extension,
+      // CodeMirror mesure ses lignes en supposant qu'elles ne s'enroulent
+      // jamais (une pure surcharge CSS casserait son calcul de hauteur).
+      extensions: [EditorView.lineWrapping]
     }
   }
 }

@@ -750,6 +750,13 @@ body {
   font-weight: 700;
 }
 
+/* Bloc de code (CodeMirror intégré à Crepe) : le thème par défaut ne fixe pas
+   de couleur de texte, qui hérite d'un gris trop clair — peu lisible en jour. */
+.milkdown-host .milkdown-code-block .cm-content,
+.milkdown-host .milkdown-code-block .cm-line {
+  color: var(--text);
+}
+
 /* Enveloppe de l'éditeur markdown : accueille la barre de recherche flottante */
 .milkdown-wrap {
   flex: 1;
@@ -1187,11 +1194,158 @@ body {
   color: var(--text);
   background: var(--hover);
 }
+.chip-btn.active {
+  color: var(--text);
+  background: var(--hover-strong);
+}
+/* Cassette « allumée » pendant la lecture : couleurs inversées. */
+.chip-btn.playing {
+  color: var(--accent-contrast);
+  background: var(--accent);
+}
+.chip-btn.playing:hover {
+  color: var(--accent-contrast);
+  background: var(--accent);
+}
 
 .chip-aa {
   font-size: 14px;
   font-weight: 500;
   letter-spacing: 0;
+}
+
+/* Radio lofi — micro-player inline dans la barre de statut */
+.radio {
+  display: inline-flex;
+  align-items: center;
+}
+.radio-strip {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  max-width: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-width 0.22s ease, opacity 0.18s ease;
+}
+.radio-strip.open {
+  max-width: 150px;
+  opacity: 1;
+}
+.radio-error {
+  color: var(--warn-fg);
+  font-size: 12px;
+  cursor: help;
+  padding: 0 2px;
+}
+.icon-spin {
+  animation: radio-spin 3s linear infinite;
+  transform-origin: 50% 50%;
+}
+@keyframes radio-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Pochette flottante (bas-droite, au-dessus de la barre) */
+.radio-cover {
+  position: fixed;
+  right: 12px;
+  bottom: 40px;
+  z-index: 50;
+  width: 180px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 28px var(--overlay);
+}
+.radio-cover-video {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: var(--card-bg);
+}
+.radio-cover-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  font-size: 11px;
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  border-top: 1px solid var(--border);
+}
+.radio-pick-btn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 4px;
+}
+.radio-pick-btn:hover,
+.radio-pick-btn.on {
+  color: var(--text);
+  background: var(--hover);
+}
+.radio-list {
+  position: absolute;
+  inset: 0;
+  background: var(--card-bg);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 4px;
+  overflow-y: auto;
+}
+.radio-list-item {
+  text-align: left;
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font-size: 11px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.radio-list-item:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+.radio-list-item.on {
+  background: var(--selected);
+  color: var(--text);
+}
+.radio-cover-marquee {
+  display: inline-block;
+  will-change: transform;
+}
+.radio-cover-marquee.scroll {
+  animation: radio-marquee 7s ease-in-out infinite alternate;
+}
+@keyframes radio-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(var(--marquee-dist, 0));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .icon-spin,
+  .radio-cover-marquee.scroll {
+    animation: none;
+  }
 }
 
 /* Recherche */

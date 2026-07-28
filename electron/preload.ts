@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer, webUtils, type IpcRendererEvent } from 'electron'
-import type { ClaudeEvent, SearchMatch, TreeNode, WorkspaceInfo } from '../shared/types'
+import type { ClaudeEvent, RadioState, SearchMatch, TreeNode, WorkspaceInfo } from '../shared/types'
 
 function on<T>(channel: string, cb: (payload: T) => void): () => void {
   const listener = (_event: IpcRendererEvent, payload: T): void => cb(payload)
@@ -40,6 +40,19 @@ const api = {
     reset: (): Promise<void> => ipcRenderer.invoke('claude:reset'),
     onEvent: (cb: (event: ClaudeEvent) => void): (() => void) =>
       on<ClaudeEvent>('claude:event', cb)
+  },
+  radio: {
+    getState: (): Promise<RadioState> => ipcRenderer.invoke('radio:getState'),
+    seed: (index: number): void => {
+      ipcRenderer.send('radio:seed', index)
+    },
+    play: (index?: number): void => {
+      ipcRenderer.send('radio:play', index)
+    },
+    pause: (): void => {
+      ipcRenderer.send('radio:pause')
+    },
+    onState: (cb: (state: RadioState) => void): (() => void) => on<RadioState>('radio:state', cb)
   },
   pdf: {
     export: (html: string, defaultName: string): Promise<boolean> =>

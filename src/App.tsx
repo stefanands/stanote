@@ -7,6 +7,8 @@ import TerminalPane from './components/TerminalPane/TerminalPane'
 import SearchPanel from './components/SearchPanel/SearchPanel'
 import QuickOpen from './components/QuickOpen'
 import StatusBar from './components/StatusBar'
+import RadioCover from './components/RadioCover'
+import RadioYouTube from './components/RadioYouTube'
 import TabBar from './components/TabBar'
 import Icon, { type IconName } from './components/Icon'
 import {
@@ -180,6 +182,14 @@ export default function App(): JSX.Element {
       else if (action === 'save') void useTabs.getState().saveActive()
       else if (action === 'closeTab') void useTabs.getState().closeActive()
       else if (action === 'exportPdf') exportActivePdf()
+      else if (action === 'toggleFiles') {
+        if (useUi.getState().sidebarView === 'search') {
+          useUi.getState().setSidebarView('files')
+          setShowExplorer(() => true)
+        } else {
+          setShowExplorer((v) => !v)
+        }
+      } else if (action === 'toggleTerminal') setShowTerminal((v) => !v)
       else if (action.startsWith('layout:')) useUi.getState().setLayout(action.slice(7) as Layout)
     })
     return () => {
@@ -192,15 +202,9 @@ export default function App(): JSX.Element {
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent): void => {
       const mod = e.metaKey || e.ctrlKey
-      if (mod && e.shiftKey && e.key.toLowerCase() === 'e') {
-        e.preventDefault()
-        if (useUi.getState().sidebarView === 'search') {
-          useUi.getState().setSidebarView('files')
-          setShowExplorer(() => true)
-        } else {
-          setShowExplorer((v) => !v)
-        }
-      } else if (mod && e.shiftKey && e.key.toLowerCase() === 'f') {
+      // Cmd+Shift+E (fichiers) et Cmd+J (terminal) sont désormais gérés par le
+      // menu Affichage (accélérateurs natifs) → voir electron/menu.ts.
+      if (mod && e.shiftKey && e.key.toLowerCase() === 'f') {
         e.preventDefault()
         useUi.getState().setSidebarView('search')
         setShowExplorer(() => true)
@@ -217,9 +221,6 @@ export default function App(): JSX.Element {
       } else if (mod && !e.shiftKey && e.key.toLowerCase() === 'p') {
         e.preventDefault()
         useUi.getState().setQuickOpen(!useUi.getState().quickOpen)
-      } else if (mod && !e.shiftKey && e.key.toLowerCase() === 'j') {
-        e.preventDefault()
-        setShowTerminal((v) => !v)
       } else if (e.ctrlKey && e.key === 'Tab') {
         e.preventDefault()
         useTabs.getState().cycle(e.shiftKey ? -1 : 1)
@@ -383,6 +384,8 @@ export default function App(): JSX.Element {
       <div className="workspace">{renderLayout()}</div>
 
       <StatusBar />
+      <RadioCover />
+      <RadioYouTube />
       <QuickOpen />
     </div>
   )

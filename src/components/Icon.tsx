@@ -27,6 +27,12 @@ export type IconName =
   | 'sparkle'
   | 'send'
   | 'stop'
+  | 'cassette'
+  | 'play'
+  | 'pause'
+  | 'next'
+  | 'disc'
+  | 'radio'
 
 const paths: Record<IconName, JSX.Element> = {
   chevron: <polyline points="6 3.5 10.5 8 6 12.5" />,
@@ -109,6 +115,42 @@ const paths: Record<IconName, JSX.Element> = {
     </>
   ),
   stop: <rect x="4.5" y="4.5" width="7" height="7" rx="1" />,
+  cassette: (
+    <>
+      <rect x="2" y="4" width="12" height="8" rx="1.5" />
+      <circle cx="6" cy="8" r="1.3" />
+      <circle cx="10" cy="8" r="1.3" />
+      <line x1="5" y1="11" x2="11" y2="11" />
+    </>
+  ),
+  play: <path d="M5.5 4 12 8 5.5 12Z" />,
+  pause: (
+    <>
+      <rect x="5" y="4" width="2" height="8" rx="0.6" />
+      <rect x="9" y="4" width="2" height="8" rx="0.6" />
+    </>
+  ),
+  next: (
+    <>
+      <path d="M4.5 4 10 8 4.5 12Z" />
+      <line x1="11" y1="4" x2="11" y2="12" />
+    </>
+  ),
+  disc: (
+    <>
+      <circle cx="8" cy="8" r="5.5" />
+      <circle cx="8" cy="8" r="1.2" />
+    </>
+  ),
+  radio: (
+    <>
+      <path d="M4 6.2 12.5 2.9" />
+      <rect x="2" y="6" width="12" height="7.5" rx="1.5" />
+      <circle cx="10.4" cy="9.75" r="1.9" />
+      <line x1="4.4" y1="8.7" x2="6.9" y2="8.7" />
+      <line x1="4.4" y1="11" x2="6.9" y2="11" />
+    </>
+  ),
   folder: <path d="M2 4h4l1.3 1.6H14v7.4H2z" />,
   'folder-open': (
     <>
@@ -196,9 +238,10 @@ const paths: Record<IconName, JSX.Element> = {
 interface Props {
   name: IconName
   size?: number
+  className?: string
 }
 
-export default function Icon({ name, size = 16 }: Props): JSX.Element {
+export default function Icon({ name, size = 16, className }: Props): JSX.Element {
   return (
     <svg
       width={size}
@@ -210,6 +253,7 @@ export default function Icon({ name, size = 16 }: Props): JSX.Element {
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
+      className={className}
     >
       {paths[name]}
     </svg>

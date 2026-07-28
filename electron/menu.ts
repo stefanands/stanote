@@ -20,6 +20,8 @@ const labels = {
     paste: 'Coller',
     selectAll: 'Tout sélectionner',
     view: 'Affichage',
+    filesToggle: 'Fichiers',
+    terminalToggle: 'Terminal',
     layout: 'Disposition',
     layoutEditorLeft: 'Éditeur à gauche',
     layoutEditorRight: 'Éditeur à droite',
@@ -50,6 +52,8 @@ const labels = {
     paste: 'Paste',
     selectAll: 'Select All',
     view: 'View',
+    filesToggle: 'Files',
+    terminalToggle: 'Terminal',
     layout: 'Layout',
     layoutEditorLeft: 'Editor Left',
     layoutEditorRight: 'Editor Right',
@@ -125,6 +129,17 @@ function buildMenu(locale: Locale): void {
     {
       label: l.view,
       submenu: [
+        {
+          label: l.filesToggle,
+          accelerator: 'CmdOrCtrl+Shift+E',
+          click: () => send('toggleFiles')
+        },
+        {
+          label: l.terminalToggle,
+          accelerator: 'CmdOrCtrl+J',
+          click: () => send('toggleTerminal')
+        },
+        { type: 'separator' },
         {
           label: l.layout,
           submenu: [

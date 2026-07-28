@@ -59,7 +59,14 @@ const dict = {
     claudeTool: 'Claude {tool}…',
     claudeActions: '{n} action(s)',
     claudeEmpty: 'Claude peut lire et modifier les fichiers du dossier ouvert.',
-    claudeMissing: 'CLI « claude » introuvable — installe Claude Code puis relance Stanote.'
+    claudeMissing: 'CLI « claude » introuvable — installe Claude Code puis relance Stanote.',
+    radioTitle: 'Radio lofi',
+    radioPlay: 'Lecture',
+    radioPause: 'Pause',
+    radioNext: 'Radio suivante',
+    radioShowCover: 'Afficher Stan',
+    radioHideCover: 'Masquer Stan',
+    radioChoose: 'Choisir la radio'
   },
   en: {
     files: 'Files',
@@ -117,7 +124,14 @@ const dict = {
     claudeTool: 'Claude is using {tool}…',
     claudeActions: '{n} action(s)',
     claudeEmpty: 'Claude can read and edit the files in the open folder.',
-    claudeMissing: '"claude" CLI not found — install Claude Code, then relaunch Stanote.'
+    claudeMissing: '"claude" CLI not found — install Claude Code, then relaunch Stanote.',
+    radioTitle: 'Lofi radio',
+    radioPlay: 'Play',
+    radioPause: 'Pause',
+    radioNext: 'Next station',
+    radioShowCover: 'Show Stan',
+    radioHideCover: 'Hide Stan',
+    radioChoose: 'Choose station'
   }
 } as const
 

@@ -1,5 +1,7 @@
 import { app, BrowserWindow, dialog, ipcMain, net, protocol, shell } from 'electron'
 import { promises as fsp } from 'fs'
+import { createServer } from 'http'
+import type { AddressInfo } from 'net'
 import { join } from 'path'
 import { pathToFileURL } from 'url'
 
@@ -13,6 +15,60 @@ protocol.registerSchemesAsPrivileged([
     privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true }
   }
 ])
+
+const APP_MIME: Record<string, string> = {
+  '.html': 'text/html',
+  '.js': 'text/javascript',
+  '.mjs': 'text/javascript',
+  '.css': 'text/css',
+  '.json': 'application/json',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.gif': 'image/gif',
+  '.svg': 'image/svg+xml',
+  '.ico': 'image/x-icon',
+  '.webm': 'video/webm',
+  '.mp4': 'video/mp4',
+  '.woff': 'font/woff',
+  '.woff2': 'font/woff2',
+  '.ttf': 'font/ttf',
+  '.map': 'application/json'
+}
+
+/** Origine http du rendu packagé (serveur local). null tant que non démarré. */
+let appServerOrigin: string | null = null
+
+/** Sert le rendu buildé (out/renderer, y compris dans l'asar) sur 127.0.0.1.
+ *  Une VRAIE origine http est indispensable pour les embeds YouTube (Claude FM) :
+ *  YouTube refuse file:// et les schemes custom (erreur 153). */
+function startAppServer(): Promise<string> {
+  const rendererDir = join(__dirname, '../renderer')
+  return new Promise((resolve, reject) => {
+    const server = createServer((req, res) => {
+      void (async () => {
+        try {
+          let rel = decodeURIComponent((req.url ?? '/').split('?')[0])
+          if (rel === '/' || rel === '') rel = '/index.html'
+          const file = join(rendererDir, rel.replace(/^(\.\.[/\\])+/, ''))
+          const data = await fsp.readFile(file)
+          const ext = file.slice(file.lastIndexOf('.')).toLowerCase()
+          res.writeHead(200, { 'content-type': APP_MIME[ext] ?? 'application/octet-stream' })
+          res.end(data)
+        } catch {
+          res.writeHead(404)
+          res.end('Not found')
+        }
+      })()
+    })
+    server.on('error', reject)
+    // Port éphémère, lié à la boucle locale uniquement.
+    server.listen(0, '127.0.0.1', () => {
+      const addr = server.address() as AddressInfo
+      resolve(`http://127.0.0.1:${addr.port}`)
+    })
+  })
+}
 
 function registerFileProtocol(): void {
   protocol.handle('stanote-file', (request) => {
@@ -53,6 +109,61 @@ function registerPdfHandler(): void {
   })
 }
 
+/* Radio : une seule radio pour toute l'app. L'état vit ici (source de vérité) ;
+   toutes les fenêtres l'affichent et le pilotent, mais une seule — le « porteur »
+   — produit réellement le son (un flux audio / une iframe ne peut vivre que dans
+   une fenêtre). Si le porteur se ferme, la lecture est reprise par une autre. */
+const radio: { index: number | null; isPlaying: boolean; ownerId: number | null } = {
+  index: null,
+  isPlaying: false,
+  ownerId: null
+}
+
+function broadcastRadio(): void {
+  for (const win of BrowserWindow.getAllWindows()) {
+    if (win.webContents.isDestroyed()) continue
+    win.webContents.send('radio:state', {
+      index: radio.index,
+      isPlaying: radio.isPlaying,
+      isOwner: win.webContents.id === radio.ownerId
+    })
+  }
+}
+
+function registerRadioHandlers(): void {
+  ipcMain.handle('radio:getState', (event) => ({
+    index: radio.index,
+    isPlaying: radio.isPlaying,
+    isOwner: event.sender.id === radio.ownerId
+  }))
+
+  // Première fenêtre : sème la station mémorisée côté renderer (localStorage).
+  ipcMain.on('radio:seed', (_event, index: number) => {
+    if (radio.index === null) radio.index = index
+  })
+
+  ipcMain.on('radio:play', (event, index?: number) => {
+    if (typeof index === 'number') radio.index = index
+    radio.isPlaying = true
+    radio.ownerId = event.sender.id // la fenêtre qui demande devient porteuse
+    broadcastRadio()
+  })
+
+  ipcMain.on('radio:pause', () => {
+    radio.isPlaying = false
+    broadcastRadio()
+  })
+}
+
+/** Le porteur se ferme : passer la main à une autre fenêtre pour ne pas couper. */
+function handleRadioWindowClosed(id: number): void {
+  if (radio.ownerId !== id) return
+  const next = BrowserWindow.getAllWindows().find((w) => !w.webContents.isDestroyed())
+  radio.ownerId = next ? next.webContents.id : null
+  if (!next) radio.isPlaying = false
+  broadcastRadio()
+}
+
 interface WindowOpts {
   /** Fenêtre créée à la demande (Nouvelle fenêtre) : ne restaure pas le dernier dossier. */
   isNew?: boolean
@@ -79,6 +190,8 @@ export function createWindow(opts: WindowOpts = {}): void {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: false,
+      // Radio : autorise la lecture auto (flux <audio> + iframe Claude FM).
+      autoplayPolicy: 'no-user-gesture-required',
       additionalArguments
     }
   })
@@ -98,6 +211,7 @@ export function createWindow(opts: WindowOpts = {}): void {
     disposePtyForWebContents(id)
     disposeSearchForWebContents(id)
     disposeClaudeForWebContents(id)
+    handleRadioWindowClosed(id)
   })
 
   win.webContents.setWindowOpenHandler(({ url }) => {
@@ -107,6 +221,9 @@ export function createWindow(opts: WindowOpts = {}): void {
 
   if (process.env['ELECTRON_RENDERER_URL']) {
     win.loadURL(process.env['ELECTRON_RENDERER_URL'])
+  } else if (appServerOrigin) {
+    // Origine http locale plutôt que file:// → embeds YouTube (Claude FM) OK.
+    win.loadURL(`${appServerOrigin}/index.html`)
   } else {
     win.loadFile(join(__dirname, '../renderer/index.html'))
   }
@@ -123,14 +240,24 @@ app.on('open-file', (event, path) => {
   else openQueue.push(path)
 })
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   registerFileProtocol()
   registerFsHandlers()
   registerPtyHandlers()
   registerSearchHandlers()
   registerClaudeHandlers()
+  registerRadioHandlers()
   registerPdfHandler()
   setupMenu({ onNewWindow: () => createWindow({ isNew: true }) })
+  // En prod (pas de dev server), on sert le rendu en http local pour une origine
+  // valide (YouTube/Claude FM). Ignoré en dev où ELECTRON_RENDERER_URL est défini.
+  if (!process.env['ELECTRON_RENDERER_URL']) {
+    try {
+      appServerOrigin = await startAppServer()
+    } catch (e) {
+      console.error('serveur rendu local indisponible, repli file://', e)
+    }
+  }
   ready = true
 
   if (openQueue.length > 0) {

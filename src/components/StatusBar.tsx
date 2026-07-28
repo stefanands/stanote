@@ -4,6 +4,7 @@ import { useTheme } from '../stores/theme'
 import { useFont, FONT_PAIRS } from '../stores/font'
 import { useI18n, useT } from '../i18n'
 import Icon from './Icon'
+import RadioPlayer from './RadioPlayer'
 
 export default function StatusBar(): JSX.Element {
   const t = useT()
@@ -22,11 +23,11 @@ export default function StatusBar(): JSX.Element {
 
   return (
     <div className="statusbar">
-      <span className="statusbar-path">{rootPath ?? t('noFolder')}</span>
+      <span className="statusbar-path">
+        {active ? `${relative}${active.dirty ? ' ●' : ''}` : ''}
+      </span>
       <span className="statusbar-right">
-        <span className="statusbar-file">
-          {active ? `${relative}${active.dirty ? ' ●' : ''}` : t('shortcutsHint')}
-        </span>
+        <RadioPlayer />
         <button
           className="chip-btn"
           title={`${t('fontCycle')} — ${FONT_PAIRS[fontIndex].label}`}
@@ -39,7 +40,7 @@ export default function StatusBar(): JSX.Element {
           title={t('themeToggle')}
           onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
         >
-          <Icon name={theme === 'dark' ? 'moon' : 'sun'} size={14} />
+          <Icon name={theme === 'dark' ? 'moon' : 'sun'} size={18} />
         </button>
         <button
           className="chip-btn"
