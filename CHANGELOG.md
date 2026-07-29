@@ -4,6 +4,27 @@ All notable changes to Stanote are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## \[1.3.0] — 2026-07-28
+
+### Added
+
+* Built-in **lofi radio** in the status bar: a cassette button unfolds
+  play/pause, next station, and a floating animated cover. Ad-free stations
+  (Claude FM and others via YouTube, Radio Paradise streams).
+
+* One radio for the whole app: with several windows open, the radio is shared —
+  any window shows and controls the same station, and playback carries over if
+  the window that was playing is closed.
+
+### Changed
+
+* Code blocks in notes now **wrap** instead of scrolling horizontally, and their
+  text is more legible in the light theme.
+
+* Files (`⌘⇧E`) and Terminal (`⌘J`) are now entries in the View menu.
+
+* Status bar: the active file path moved to the left.
+
 ## \[1.2.1] — 2026-07-17
 
 ### Fixed
