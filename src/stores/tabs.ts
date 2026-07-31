@@ -43,18 +43,26 @@ const AUTOSAVE_DELAY_MS = 500
 const saveTimers = new Map<string, ReturnType<typeof setTimeout>>()
 
 const MARKDOWN = /\.(md|markdown|txt)$/i
-const CODE = /\.(json|ya?ml)$/i
-export const isEditable = (path: string): boolean => MARKDOWN.test(path) || CODE.test(path)
+const HTML = /\.html?$/i
+/** Formats texte simples ouverts dans l'éditeur de code. */
+const CODE = /\.(json|ya?ml|toml|ini|cfg|conf|csv|log|xml|py|php)$/i
+/** Fichiers d'environnement : `.env`, `.env.local`… (pas d'extension). */
+const ENV = /(^|\/)\.env(\.[^/]+)?$/i
+
+const isCode = (path: string): boolean => CODE.test(path) || ENV.test(path)
+
+export const isEditable = (path: string): boolean =>
+  MARKDOWN.test(path) || isCode(path) || HTML.test(path)
 
 export type FileKind = 'markdown' | 'code' | 'pdf' | 'image' | 'html' | 'other'
 
 export function fileKind(path: string): FileKind {
   const p = path.toLowerCase()
   if (MARKDOWN.test(p)) return 'markdown'
-  if (CODE.test(p)) return 'code'
+  if (isCode(p)) return 'code'
   if (p.endsWith('.pdf')) return 'pdf'
   if (/\.(png|jpe?g|gif|webp|svg|bmp|ico|avif)$/.test(p)) return 'image'
-  if (/\.(html?|htm)$/.test(p)) return 'html'
+  if (HTML.test(p)) return 'html'
   return 'other'
 }
 

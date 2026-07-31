@@ -27,7 +27,14 @@ function withBase(html: string, path: string): string {
   return base + html
 }
 
-export default function DocumentViewer({ path, kind }: { path: string; kind: Kind }): JSX.Element {
+interface Props {
+  path: string
+  kind: Kind
+  /** html : contenu en mémoire (édition en cours) ; sinon relu sur le disque. */
+  content?: string
+}
+
+export default function DocumentViewer({ path, kind, content }: Props): JSX.Element {
   const [url, setUrl] = useState<string | null>(null)
   const [html, setHtml] = useState<string | null>(null)
 
@@ -36,8 +43,12 @@ export default function DocumentViewer({ path, kind }: { path: string; kind: Kin
     let cancelled = false
 
     if (kind === 'html') {
-      void window.stancode.fs.readFile(path).then((content) => {
-        if (!cancelled) setHtml(withBase(content, path))
+      if (content !== undefined) {
+        setHtml(withBase(content, path))
+        return
+      }
+      void window.stancode.fs.readFile(path).then((c) => {
+        if (!cancelled) setHtml(withBase(c, path))
       })
     } else {
       void window.stancode.fs.readBinary(path).then((bytes) => {
@@ -52,7 +63,7 @@ export default function DocumentViewer({ path, kind }: { path: string; kind: Kin
       cancelled = true
       if (objectUrl) URL.revokeObjectURL(objectUrl)
     }
-  }, [path, kind])
+  }, [path, kind, content])
 
   if (kind === 'image') {
     return (

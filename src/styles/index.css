@@ -891,7 +891,15 @@ body {
   border-radius: 2px;
 }
 
-/* Éditeur de code (CodeMirror — json/yaml) */
+/* Barre d'outils de la visionneuse (bascule aperçu / code des .html) */
+.doc-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  padding: 2px 4px 0;
+  flex-shrink: 0;
+}
+
+/* Éditeur de code (CodeMirror — formats texte simples) */
 .code-host {
   flex: 1;
   min-height: 0;

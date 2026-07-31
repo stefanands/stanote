@@ -11,8 +11,15 @@ import { EditorState, Compartment, type Extension } from '@codemirror/state'
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands'
 import { search, searchKeymap } from '@codemirror/search'
 import { bracketMatching, syntaxHighlighting, defaultHighlightStyle } from '@codemirror/language'
+import { StreamLanguage } from '@codemirror/language'
 import { json } from '@codemirror/lang-json'
 import { yaml } from '@codemirror/lang-yaml'
+import { xml } from '@codemirror/lang-xml'
+import { html } from '@codemirror/lang-html'
+import { python } from '@codemirror/lang-python'
+import { php } from '@codemirror/lang-php'
+import { toml } from '@codemirror/legacy-modes/mode/toml'
+import { properties } from '@codemirror/legacy-modes/mode/properties'
 import { oneDarkHighlightStyle } from '@codemirror/theme-one-dark'
 import { useTheme } from '../../stores/theme'
 import type { Locale } from '../../i18n'
@@ -41,6 +48,38 @@ const FR_PHRASES: Record<string, string> = {
   'replaced $ matches': '$ occurrences remplacées',
   'replaced match on line $': 'occurrence remplacée ligne $',
   'on line': 'à la ligne'
+}
+
+/** Coloration selon l'extension. `properties` couvre ini/cfg/conf/.env (même
+ *  forme clé=valeur) ; csv et log restent en texte brut. */
+function languageFor(path: string): Extension | null {
+  const name = path.toLowerCase().split('/').pop() ?? ''
+  if (name.startsWith('.env')) return StreamLanguage.define(properties)
+  const ext = name.includes('.') ? name.slice(name.lastIndexOf('.') + 1) : ''
+  switch (ext) {
+    case 'json':
+      return json()
+    case 'yaml':
+    case 'yml':
+      return yaml()
+    case 'xml':
+      return xml()
+    case 'html':
+    case 'htm':
+      return html()
+    case 'py':
+      return python()
+    case 'php':
+      return php()
+    case 'toml':
+      return StreamLanguage.define(toml)
+    case 'ini':
+    case 'cfg':
+    case 'conf':
+      return StreamLanguage.define(properties)
+    default:
+      return null
+  }
 }
 
 /* Thème éditeur assorti à la palette (variables CSS → suit jour/nuit). */
@@ -106,7 +145,7 @@ export default function CodeEditor({ path, initialValue, locale, onChange }: Pro
           bracketMatching(),
           search({ top: true }),
           keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap, indentWithTab]),
-          /\.json$/i.test(path) ? json() : yaml(),
+          languageFor(path) ?? [],
           locale === 'fr' ? EditorState.phrases.of(FR_PHRASES) : [],
           themeSlot.current.of(themedExtensions(dark)),
           EditorView.lineWrapping,

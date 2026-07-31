@@ -16,6 +16,13 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   any window shows and controls the same station, and playback carries over if
   the window that was playing is closed.
 
+* More editable file types: `.csv`, `.env`, `.ini` / `.cfg` / `.conf`, `.toml`,
+  `.xml`, `.log`, `.py` and `.php` now open in the code editor, alongside
+  `.json` and `.yaml`.
+
+* HTML files: a button toggles between the rendered preview and the editable
+  source code.
+
 ### Changed
 
 * Code blocks in notes now **wrap** instead of scrolling horizontally, and their

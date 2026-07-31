@@ -23,15 +23,18 @@ function ensureExtension(name: string): string {
   return /\.[^./]+$/.test(name) ? name : `${name}.md`
 }
 
-const CODE_EXT = /\.(json|ya?ml|toml|xml|[jt]sx?|css|scss|sh|zsh|py|rb|go|rs|swift|sql)$/i
+/** Fichiers de code non éditables dans l'app, mais reconnaissables à l'icône. */
+const CODE_EXT = /\.([jt]sx?|css|scss|sh|zsh|rb|go|rs|swift|sql)$/i
+/** Données/texte simples : icône « document » plutôt que « code ». */
+const DATA_EXT = /\.(csv|log)$/i
 
 /** Icône selon le type : dossier ouvert/fermé, ou famille du fichier. */
 function iconFor(node: TreeNode, open: boolean): IconName {
   if (node.type === 'dir') return open ? 'folder-open' : 'folder'
   const kind = fileKind(node.path)
-  if (kind === 'markdown') return 'file-text'
+  if (kind === 'markdown' || DATA_EXT.test(node.path)) return 'file-text'
   if (kind === 'image') return 'file-image'
-  if (kind === 'html' || CODE_EXT.test(node.path)) return 'file-code'
+  if (kind === 'code' || kind === 'html' || CODE_EXT.test(node.path)) return 'file-code'
   return 'file'
 }
 

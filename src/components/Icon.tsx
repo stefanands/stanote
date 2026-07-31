@@ -18,6 +18,7 @@ export type IconName =
   | 'reveal'
   | 'copy'
   | 'check'
+  | 'eye'
   | 'folder'
   | 'folder-open'
   | 'file'
@@ -99,6 +100,12 @@ const paths: Record<IconName, JSX.Element> = {
     </>
   ),
   check: <polyline points="3 8.5 6.5 12 13 4.5" />,
+  eye: (
+    <>
+      <path d="M1.5 8S4 3.5 8 3.5 14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8Z" />
+      <circle cx="8" cy="8" r="2" />
+    </>
+  ),
   sparkle: (
     // Étoile Claude : 8 branches, trait épais (indépendant du trait global)
     <g strokeWidth={1.8}>
