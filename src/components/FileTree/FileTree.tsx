@@ -24,7 +24,7 @@ function ensureExtension(name: string): string {
 }
 
 /** Fichiers de code non éditables dans l'app, mais reconnaissables à l'icône. */
-const CODE_EXT = /\.([jt]sx?|css|scss|sh|zsh|rb|go|rs|swift|sql)$/i
+const CODE_EXT = /\.([jt]sx?|scss|sh|zsh|rb|go|rs|swift|sql)$/i
 /** Données/texte simples : icône « document » plutôt que « code ». */
 const DATA_EXT = /\.(csv|log)$/i
 

@@ -24,6 +24,20 @@ export default function EditorPane(): JSX.Element {
   // Chaque fichier s'ouvre en aperçu.
   useEffect(() => setHtmlAsCode(false), [activePath])
 
+  // Cmd+Maj+P : bascule aperçu ↔ code source (fichiers html).
+  const isHtml = kind === 'html'
+  useEffect(() => {
+    if (!isHtml) return
+    const onKey = (e: KeyboardEvent): void => {
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'p') {
+        e.preventDefault()
+        setHtmlAsCode((v) => !v)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [isHtml])
+
   return (
     <div className="pane editor-pane">
       {layout !== 'editor-left' && <TabBar variant="pane" />}

@@ -54,6 +54,8 @@ const api = {
     },
     onState: (cb: (state: RadioState) => void): (() => void) => on<RadioState>('radio:state', cb)
   },
+  /** URL locale d'aperçu d'un document (null si le serveur n'a pas démarré). */
+  docUrl: (path: string): Promise<string | null> => ipcRenderer.invoke('doc:url', path),
   pdf: {
     export: (html: string, defaultName: string): Promise<boolean> =>
       ipcRenderer.invoke('pdf:export', html, defaultName)

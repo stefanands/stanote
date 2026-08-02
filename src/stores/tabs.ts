@@ -45,7 +45,7 @@ const saveTimers = new Map<string, ReturnType<typeof setTimeout>>()
 const MARKDOWN = /\.(md|markdown|txt)$/i
 const HTML = /\.html?$/i
 /** Formats texte simples ouverts dans l'éditeur de code. */
-const CODE = /\.(json|ya?ml|toml|ini|cfg|conf|csv|log|xml|py|php)$/i
+const CODE = /\.(json|ya?ml|toml|ini|cfg|conf|csv|log|xml|css|py|php)$/i
 /** Fichiers d'environnement : `.env`, `.env.local`… (pas d'extension). */
 const ENV = /(^|\/)\.env(\.[^/]+)?$/i
 

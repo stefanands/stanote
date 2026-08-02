@@ -17,11 +17,18 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   the window that was playing is closed.
 
 * More editable file types: `.csv`, `.env`, `.ini` / `.cfg` / `.conf`, `.toml`,
-  `.xml`, `.log`, `.py` and `.php` now open in the code editor, alongside
-  `.json` and `.yaml`.
+  `.xml`, `.css`, `.log`, `.py` and `.php` now open in the code editor,
+  alongside `.json` and `.yaml`.
 
-* HTML files: a button toggles between the rendered preview and the editable
-  source code.
+* HTML files: a button (or `⌘⇧P`) toggles between the rendered preview and the
+  editable source code. The preview now runs the page's JavaScript — slide
+  decks and interactive pages display properly — inside an isolated frame with
+  no access to the app or your files.
+
+* Code editor assistance: fold blocks and tags, auto-close brackets and tags,
+  completion for HTML tags/attributes and CSS properties, matching-tag
+  highlight, JSON syntax error reporting, auto-indent with indentation guides,
+  and a colour swatch with picker next to CSS colours.
 
 ### Changed
 

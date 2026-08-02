@@ -37,6 +37,24 @@ interface Props {
 export default function DocumentViewer({ path, kind, content }: Props): JSX.Element {
   const [url, setUrl] = useState<string | null>(null)
   const [html, setHtml] = useState<string | null>(null)
+  /** URL servie en local : permet au document d'exécuter son JavaScript. */
+  const [docUrl, setDocUrl] = useState<string | null>(null)
+  const [docUrlReady, setDocUrlReady] = useState(false)
+
+  // Rechargé à chaque changement de contenu : l'aperçu suit les modifications
+  // enregistrées (l'auto-save écrit le fichier que sert le serveur local).
+  useEffect(() => {
+    if (kind !== 'html') return
+    let cancelled = false
+    void window.stancode.docUrl(path).then((u) => {
+      if (cancelled) return
+      setDocUrl(u ? `${u}?v=${Date.now()}` : null)
+      setDocUrlReady(true)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [path, kind, content])
 
   useEffect(() => {
     let objectUrl: string | null = null
@@ -71,6 +89,17 @@ export default function DocumentViewer({ path, kind, content }: Props): JSX.Elem
     )
   }
   if (kind === 'html') {
+    if (!docUrlReady) return <div className="pane-placeholder" />
+    // Servi en http local : le document garde son URL de base (ressources
+    // relatives) et peut exécuter son JavaScript — diaporamas, pages
+    // interactives. `allow-scripts` sans `allow-same-origin` : origine opaque,
+    // donc aucun accès à l'application, à ses données ni aux fichiers.
+    if (docUrl) {
+      return (
+        <iframe className="doc-viewer" sandbox="allow-scripts" src={docUrl} title="preview" />
+      )
+    }
+    // Repli si le serveur local n'a pas démarré : rendu sans JavaScript.
     return <iframe className="doc-viewer" sandbox="" srcDoc={html ?? ''} title="preview" />
   }
   return url ? (

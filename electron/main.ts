@@ -1,4 +1,5 @@
 import { app, BrowserWindow, dialog, ipcMain, net, protocol, shell } from 'electron'
+import { randomUUID } from 'crypto'
 import { promises as fsp } from 'fs'
 import { createServer } from 'http'
 import type { AddressInfo } from 'net'
@@ -36,21 +37,39 @@ const APP_MIME: Record<string, string> = {
   '.map': 'application/json'
 }
 
-/** Origine http du rendu packagé (serveur local). null tant que non démarré. */
+/** Origine http du serveur local. null tant que non démarré. */
 let appServerOrigin: string | null = null
 
-/** Sert le rendu buildé (out/renderer, y compris dans l'asar) sur 127.0.0.1.
- *  Une VRAIE origine http est indispensable pour les embeds YouTube (Claude FM) :
- *  YouTube refuse file:// et les schemes custom (erreur 153). */
+/* Jeton secret exigé pour servir un document de l'utilisateur : le serveur
+   n'écoute que sur la boucle locale, mais tout processus de la machine pourrait
+   sinon lire n'importe quel fichier via ce port. */
+const docToken = randomUUID()
+
+/** Sert le rendu buildé (out/renderer, y compris dans l'asar) et, sous
+ *  `/__doc/<jeton>/<chemin>`, les documents de l'utilisateur pour l'aperçu HTML.
+ *  Une VRAIE origine http est indispensable aux embeds YouTube (Claude FM, qui
+ *  refuse file:// et les schemes custom, erreur 153) et permet aux aperçus HTML
+ *  d'exécuter leur JavaScript dans une iframe isolée. */
 function startAppServer(): Promise<string> {
   const rendererDir = join(__dirname, '../renderer')
+  const docPrefix = `/__doc/${docToken}`
   return new Promise((resolve, reject) => {
     const server = createServer((req, res) => {
       void (async () => {
         try {
-          let rel = decodeURIComponent((req.url ?? '/').split('?')[0])
-          if (rel === '/' || rel === '') rel = '/index.html'
-          const file = join(rendererDir, rel.replace(/^(\.\.[/\\])+/, ''))
+          const rawPath = decodeURIComponent((req.url ?? '/').split('?')[0])
+          let file: string
+          if (rawPath.startsWith('/__doc/')) {
+            if (!rawPath.startsWith(docPrefix + '/')) {
+              res.writeHead(403)
+              res.end('Forbidden')
+              return
+            }
+            file = rawPath.slice(docPrefix.length) // chemin absolu du document
+          } else {
+            const rel = rawPath === '/' || rawPath === '' ? '/index.html' : rawPath
+            file = join(rendererDir, rel.replace(/^(\.\.[/\\])+/, ''))
+          }
           const data = await fsp.readFile(file)
           const ext = file.slice(file.lastIndexOf('.')).toLowerCase()
           res.writeHead(200, { 'content-type': APP_MIME[ext] ?? 'application/octet-stream' })
@@ -68,6 +87,13 @@ function startAppServer(): Promise<string> {
       resolve(`http://127.0.0.1:${addr.port}`)
     })
   })
+}
+
+/** URL d'aperçu d'un document local (null si le serveur n'a pas démarré).
+ *  Le chemin est conservé tel quel dans l'URL : les ressources relatives du
+ *  document (css, images, polices) se résolvent donc naturellement. */
+function docUrl(path: string): string | null {
+  return appServerOrigin ? `${appServerOrigin}/__doc/${docToken}${encodeURI(path)}` : null
 }
 
 function registerFileProtocol(): void {
@@ -249,15 +275,14 @@ app.whenReady().then(async () => {
   registerRadioHandlers()
   registerPdfHandler()
   setupMenu({ onNewWindow: () => createWindow({ isNew: true }) })
-  // En prod (pas de dev server), on sert le rendu en http local pour une origine
-  // valide (YouTube/Claude FM). Ignoré en dev où ELECTRON_RENDERER_URL est défini.
-  if (!process.env['ELECTRON_RENDERER_URL']) {
-    try {
-      appServerOrigin = await startAppServer()
-    } catch (e) {
-      console.error('serveur rendu local indisponible, repli file://', e)
-    }
+  // Serveur local : sert le rendu en prod (origine http valide pour YouTube /
+  // Claude FM) et, dans les deux modes, les documents de l'aperçu HTML.
+  try {
+    appServerOrigin = await startAppServer()
+  } catch (e) {
+    console.error('serveur local indisponible', e)
   }
+  ipcMain.handle('doc:url', (_event, path: string) => docUrl(path))
   ready = true
 
   if (openQueue.length > 0) {
