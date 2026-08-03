@@ -1,55 +1,58 @@
 <div align="center">
   <img src="build/icon.png" alt="Stanote" width="120" />
   <h1>Stanote</h1>
-  <p><strong>Vos notes markdown, un terminal et vos fichiers — dans une seule fenêtre.</strong></p>
-  <p>Un éditeur de notes local pour macOS, pensé pour celles et ceux qui écrivent <em>et</em> codent.</p>
+  <p><strong>Un environnement de travail local pour écrire, structurer vos fichiers et utiliser l’IA dans le contexte de vos projets.</strong></p>
+  <p>Notes, documents, terminal et assistant IA réunis autour d’un même dossier.</p>
 </div>
 
 ---
 
-Stanote réunit trois outils que vous jonglez toute la journée : un éditeur markdown WYSIWYG, un vrai terminal et un navigateur de fichiers. Ouvrez un dossier de projet, rédigez vos notes en mise en forme directe, et lancez vos commandes juste à côté — sans quitter l'application. Quand un outil en ligne de commande modifie un fichier ouvert, l'éditeur se met à jour tout seul. Vos notes restent de simples fichiers `.md` sur votre disque : rien n'est enfermé.
+Stanote est un éditeur de notes et de fichiers pour macOS. Il s’organise autour de votre dossier de travail : vous écrivez en Markdown, consultez vos documents, modifiez les fichiers utiles et utilisez votre assistant IA sans perdre le contexte du projet.
+
+Les fichiers restent sur votre Mac, dans leurs formats habituels. Stanote n’impose ni cloud ni format propriétaire.
 
 ## Aperçu
 
 <div align="center">
-  <img src="assets/screenshots/apercu.png" alt="Stanote — éditeur et terminal, thème sombre" width="49%" />
-  <img src="assets/screenshots/apercu2.png" alt="Stanote — disposition barre latérale, thème clair" width="49%" />
+  <img src="assets/screenshots/apercu.png" alt="Stanote — éditeur, fichiers et assistant dans un même espace de travail" width="49%" />
+  <img src="assets/screenshots/apercu2.png" alt="Stanote — consultation de PDF et radio intégrée" width="49%" />
 </div>
 
 ## Fonctionnalités
 
-- **Éditeur markdown WYSIWYG** — mise en forme directe (titres, gras, listes, tâches, tableaux, code, citations), menu de commandes « / », onglets multiples et sauvegarde automatique. Interface entièrement bilingue (français / anglais).
-- **Terminal intégré** — un vrai shell (zsh) ouvert dans le dossier de votre projet. Idéal pour lancer vos scripts ou vos assistants en ligne de commande sans changer de fenêtre.
-- **Synchronisation disque** — un fichier ouvert modifié à l'extérieur se recharge silencieusement ; en cas de modifications non enregistrées, un bandeau vous laisse choisir. Pensé pour cohabiter avec les outils qui écrivent dans vos fichiers.
-- **Navigateur de fichiers** — arbre du dossier, créer / renommer / supprimer, « Révéler dans le Finder », fichier actif surligné, rafraîchissement automatique.
-- **Recherche instantanée** — recherche plein texte dans tout le dossier (ripgrep) et ouverture rapide d'un fichier par son nom (`⌘P`).
-- **Trois dispositions & multi-fenêtres** — éditeur à gauche, à droite, ou en barre latérale — au choix, d'un clic. Ouvrez autant de projets que nécessaire dans des fenêtres indépendantes.
-- **Visionneuse intégrée** — aperçu des PDF, images et fichiers HTML sans quitter votre espace de travail.
-- **Export PDF** — exportez n'importe quelle note en PDF mis en forme.
-- **Sur mesure** — thème clair (blanc tiède) ou sombre, et un choix de couples de polices (SF Pro, Didot, Futura, Optima).
-- **Local d'abord** — vos notes sont de simples fichiers markdown sur votre machine. Aucun cloud, aucun format propriétaire.
+- **Éditeur Markdown** — mise en forme directe pour les notes, documents, listes, tableaux et extraits de code. Plusieurs fichiers peuvent rester ouverts, avec sauvegarde automatique.
+- **Dossier de travail** — navigateur de fichiers, recherche plein texte, ouverture rapide, création, renommage et synchronisation avec les changements réalisés hors de l’application.
+- **IA dans le contexte du projet** — le panneau Claude permet de travailler à partir du dossier ouvert : l’assistant peut lire, modifier et créer les fichiers nécessaires au projet.
+- **Fichiers texte et pages web** — les formats usuels s’ouvrent dans un éditeur adapté. Les pages HTML peuvent être consultées sous forme de rendu interactif ou modifiées directement.
+- **Terminal intégré** — exécutez vos commandes dans le dossier du projet, sans changer d’application.
+- **Consultation de documents** — aperçu des PDF, images et pages web au sein de l’interface.
+- **Interface configurable** — thèmes clair et sombre, choix de polices, dispositions de panneaux et fenêtres de projet indépendantes.
+- **Radio intégrée** — un lecteur discret dans la barre de statut, partagé entre les fenêtres ouvertes.
+- **Données locales** — vos notes restent des fichiers Markdown et vos documents ne quittent pas votre machine.
 
 ## Installation
 
-Stanote est une application de bureau. Téléchargez la dernière version depuis la [page des releases](https://github.com/stefanands/stanote/releases) (macOS, puce Apple).
+**[Télécharger Stanote pour Mac](https://github.com/stefanands/stanote/releases/latest)** — compatible avec les Mac équipés d’une puce Apple (M1, M2, M3, M4…).
 
-> L'application n'est pas signée (distribution personnelle). Au premier lancement, macOS peut la bloquer — clic droit sur l'app → **Ouvrir**, puis confirmez. (Les builds signés/notarisés sont pris en charge en CI ; voir plus bas.)
+Ouvrez le fichier DMG, puis faites glisser Stanote dans le dossier **Applications**.
+
+> L’application est signée et notarisée par Apple : elle s’ouvre normalement depuis macOS.
 
 ## Compiler depuis les sources
 
-Prérequis : **Node.js 20+**, **npm**, et les **outils en ligne de commande Xcode** (pour le module natif `node-pty`).
+Prérequis : **Node.js 20+**, **npm**, et les outils en ligne de commande Xcode.
 
 ```bash
 git clone https://github.com/stefanands/stanote.git
 cd stanote
-npm install          # recompile aussi node-pty pour Electron (postinstall)
-npm run dev          # lancer en développement
-npm run dist:mac     # produire un .dmg dans release/
+npm install
+npm run dev
+npm run dist:mac
 ```
 
-## Stack technique
+## Technique
 
-Electron · electron-vite · React · TypeScript · [Milkdown](https://milkdown.dev) (éditeur) · [xterm.js](https://xtermjs.org) + node-pty (terminal) · [@vscode/ripgrep](https://github.com/microsoft/vscode-ripgrep) (recherche) · react-resizable-panels · zustand.
+Stanote est construit avec Electron, React, TypeScript, Milkdown et xterm.js.
 
 ## Contribuer
 
