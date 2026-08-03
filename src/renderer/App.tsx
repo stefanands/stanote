@@ -203,7 +203,7 @@ export default function App(): JSX.Element {
     const onKeyDown = (e: KeyboardEvent): void => {
       const mod = e.metaKey || e.ctrlKey
       // Cmd+Shift+E (fichiers) et Cmd+J (terminal) sont désormais gérés par le
-      // menu Affichage (accélérateurs natifs) → voir electron/menu.ts.
+      // menu Affichage (accélérateurs natifs) → voir src/main/menu.ts.
       if (mod && e.shiftKey && e.key.toLowerCase() === 'f') {
         e.preventDefault()
         useUi.getState().setSidebarView('search')

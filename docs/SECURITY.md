@@ -24,4 +24,4 @@ to remain anonymous.
 Stanote is a local-first desktop app: it reads and writes files on your machine
 and runs a shell in the integrated terminal. It does not send your notes to any
 server. Loaded PDFs, images, and HTML previews are rendered locally; HTML
-previews run in a sandboxed frame with scripts disabled.
+previews run in an isolated sandboxed frame.

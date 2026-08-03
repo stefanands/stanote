@@ -1,4 +1,4 @@
-import type { StanCodeApi } from '../electron/preload'
+import type { StanCodeApi } from '../preload/preload'
 
 declare global {
   interface Window {

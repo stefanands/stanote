@@ -27,17 +27,20 @@ npm run dist:mac   # optional: verify a production build
 ## Project layout
 
 ```
-electron/    Main process: window, menus, node-pty, fs + chokidar, ripgrep, PDF export
-src/         Renderer (React): App, components/, stores/ (zustand), styles/, i18n
-shared/      Types shared between main and renderer
-build/       App icon (icon.png / icon.icns)
+src/main/      Main process: window, menus, node-pty, fs + chokidar, ripgrep, PDF export
+src/preload/   Secure bridge between the main process and the renderer
+src/renderer/  React interface: App, components/, stores/ (zustand), styles/, i18n
+src/shared/    Types shared between main and renderer
+assets/        README screenshots and presentation assets
+build/         App icon (icon.png / icon.icns)
+docs/          Changelog and contributor documentation
 ```
 
 ## Conventions
 
 - **TypeScript everywhere**, strict mode. Keep `npx tsc --noEmit` clean.
-- **Bilingual UI**: never hard-code user-facing strings in components. Add them to `src/i18n.ts` (renderer) or the label dictionary in `electron/menu.ts` (app menu).
-- **Theming**: use the CSS variables in `src/styles/index.css` — no hard-coded colors in components.
+- **Bilingual UI**: never hard-code user-facing strings in components. Add them to `src/renderer/i18n.ts` (renderer) or the label dictionary in `src/main/menu.ts` (app menu).
+- **Theming**: use the CSS variables in `src/renderer/styles/index.css` — no hard-coded colors in components.
 - Match the style and structure of the surrounding code.
 
 ## Commit & PR
@@ -46,4 +49,4 @@ build/       App icon (icon.png / icon.icns)
 - Describe what changed and why, and how you verified it.
 - Link the related issue if there is one.
 
-By contributing, you agree that your contributions are licensed under the [MIT License](LICENSE).
+By contributing, you agree that your contributions are licensed under the [MIT License](../LICENSE).

@@ -8,7 +8,7 @@ export default defineConfig({
     plugins: [externalizeDepsPlugin({ exclude: ['chokidar'] })],
     build: {
       lib: {
-        entry: resolve(__dirname, 'electron/main.ts')
+        entry: resolve(__dirname, 'src/main/main.ts')
       }
     }
   },
@@ -16,15 +16,15 @@ export default defineConfig({
     plugins: [externalizeDepsPlugin()],
     build: {
       lib: {
-        entry: resolve(__dirname, 'electron/preload.ts')
+        entry: resolve(__dirname, 'src/preload/preload.ts')
       }
     }
   },
   renderer: {
-    root: 'src',
+    root: 'src/renderer',
     build: {
       rollupOptions: {
-        input: resolve(__dirname, 'src/index.html')
+        input: resolve(__dirname, 'src/renderer/index.html')
       }
     },
     plugins: [react()]
