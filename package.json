@@ -19,7 +19,8 @@
     "preview": "electron-vite preview",
     "postinstall": "electron-rebuild -f -w node-pty",
     "dist:mac": "electron-vite build && CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --mac",
-    "dist:linux": "electron-vite build && electron-builder --linux"
+    "dist:linux": "electron-vite build && electron-builder --linux",
+    "dist:win": "electron-vite build && electron-builder --win"
   },
   "dependencies": {
     "@fontsource/inter": "^5.2.8",

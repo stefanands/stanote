@@ -40,6 +40,7 @@ import { toml } from '@codemirror/legacy-modes/mode/toml'
 import { properties } from '@codemirror/legacy-modes/mode/properties'
 import { oneDarkHighlightStyle } from '@codemirror/theme-one-dark'
 import { useTheme } from '../../stores/theme'
+import { basename } from '../../lib/path'
 import type { Locale } from '../../i18n'
 
 interface Props {
@@ -71,7 +72,7 @@ const FR_PHRASES: Record<string, string> = {
 /** Coloration selon l'extension. `properties` couvre ini/cfg/conf/.env (même
  *  forme clé=valeur) ; csv et log restent en texte brut. */
 function languageFor(path: string): Extension | null {
-  const name = path.toLowerCase().split('/').pop() ?? ''
+  const name = basename(path).toLowerCase()
   if (name.startsWith('.env')) return StreamLanguage.define(properties)
   const ext = name.includes('.') ? name.slice(name.lastIndexOf('.') + 1) : ''
   switch (ext) {

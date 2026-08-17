@@ -95,6 +95,14 @@ body {
   flex-shrink: 0;
 }
 
+/* Windows : les contrôles de fenêtre sont à droite, en surimpression native.
+   `titlebar-area-width` est la largeur restée libre → le complément est la
+   place occupée par les boutons, qu'on réserve à droite. */
+:root[data-platform='win32'] .titlebar {
+  padding-left: 12px;
+  padding-right: calc(100vw - env(titlebar-area-width, 100vw) + 8px);
+}
+
 .titlebar-title {
   font-family: var(--font-mono);
   font-size: 14px;

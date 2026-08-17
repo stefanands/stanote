@@ -3,7 +3,7 @@ import { randomUUID } from 'crypto'
 import { promises as fsp } from 'fs'
 import { createServer } from 'http'
 import type { AddressInfo } from 'net'
-import { join } from 'path'
+import { join, resolve } from 'path'
 import { pathToFileURL } from 'url'
 
 // Protocole interne servant les fichiers du disque à la visionneuse HTML :
@@ -65,7 +65,9 @@ function startAppServer(): Promise<string> {
               res.end('Forbidden')
               return
             }
-            file = rawPath.slice(docPrefix.length) // chemin absolu du document
+            // Chemin absolu du document ; sur Windows, « /C:/x » → « C:/x ».
+            const docPath = rawPath.slice(docPrefix.length)
+            file = /^\/[a-zA-Z]:\//.test(docPath) ? docPath.slice(1) : docPath
           } else {
             const rel = rawPath === '/' || rawPath === '' ? '/index.html' : rawPath
             file = join(rendererDir, rel.replace(/^(\.\.[/\\])+/, ''))
@@ -93,7 +95,10 @@ function startAppServer(): Promise<string> {
  *  Le chemin est conservé tel quel dans l'URL : les ressources relatives du
  *  document (css, images, polices) se résolvent donc naturellement. */
 function docUrl(path: string): string | null {
-  return appServerOrigin ? `${appServerOrigin}/__doc/${docToken}${encodeURI(path)}` : null
+  if (!appServerOrigin) return null
+  // Windows : « C:\dossier\page.html » → « /C:/dossier/page.html ».
+  const urlPath = path.replace(/\\/g, '/').replace(/^(?![/])/, '/')
+  return `${appServerOrigin}/__doc/${docToken}${encodeURI(urlPath)}`
 }
 
 function registerFileProtocol(): void {
@@ -209,8 +214,16 @@ export function createWindow(opts: WindowOpts = {}): void {
     minHeight: 500,
     title: 'Stanote',
     backgroundColor: '#141617',
-    titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
+    // La barre de titre est dessinée par l'app (onglets + boutons). macOS :
+    // feux natifs incrustés ; Windows : contrôles natifs en surimpression, à
+    // droite (le renderer réserve l'espace correspondant, voir --wco-right).
+    titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'hidden',
     trafficLightPosition: { x: 14, y: 13 },
+    ...(process.platform === 'win32'
+      ? {
+          titleBarOverlay: { color: '#141617', symbolColor: '#e7e8e7', height: 40 }
+        }
+      : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/preload.js'),
       contextIsolation: true,
@@ -260,11 +273,41 @@ export function createWindow(opts: WindowOpts = {}): void {
 let ready = false
 const openQueue: string[] = []
 
+// macOS : double-clic sur un .md dans le Finder.
 app.on('open-file', (event, path) => {
   event.preventDefault()
   if (ready) createWindow({ openTarget: path })
   else openQueue.push(path)
 })
+
+/** Windows/Linux : le fichier ouvert arrive en argument de ligne de commande. */
+function fileFromArgv(argv: string[]): string | null {
+  const arg = argv
+    .slice(1)
+    .find((a) => !a.startsWith('-') && /\.(md|markdown|txt)$/i.test(a))
+  return arg ? resolve(arg) : null
+}
+
+// Une seule instance sur Windows : les ouvertures suivantes sont transmises à
+// l'instance en cours (sinon chaque double-clic lancerait une app séparée, avec
+// un serveur local et une radio de plus).
+if (process.platform !== 'darwin') {
+  if (!app.requestSingleInstanceLock()) {
+    app.quit()
+  } else {
+    app.on('second-instance', (_event, argv) => {
+      const target = fileFromArgv(argv)
+      if (target) createWindow({ openTarget: target })
+      else {
+        const win = BrowserWindow.getAllWindows()[0]
+        if (win) {
+          if (win.isMinimized()) win.restore()
+          win.focus()
+        }
+      }
+    })
+  }
+}
 
 app.whenReady().then(async () => {
   registerFileProtocol()
@@ -283,11 +326,26 @@ app.whenReady().then(async () => {
     console.error('serveur local indisponible', e)
   }
   ipcMain.handle('doc:url', (_event, path: string) => docUrl(path))
+
+  // Windows : la surimpression des contrôles natifs suit le thème de l'app.
+  ipcMain.on('window:titleBarTheme', (event, theme: 'dark' | 'light') => {
+    if (process.platform !== 'win32') return
+    const win = BrowserWindow.fromWebContents(event.sender)
+    win?.setTitleBarOverlay(
+      theme === 'light'
+        ? { color: '#fafafa', symbolColor: '#242525', height: 40 }
+        : { color: '#141617', symbolColor: '#e7e8e7', height: 40 }
+    )
+  })
   ready = true
 
+  // Fichier passé au lancement : file d'attente macOS, ou argv (Windows/Linux).
+  const argvTarget = process.platform === 'darwin' ? null : fileFromArgv(process.argv)
   if (openQueue.length > 0) {
     openQueue.forEach((p) => createWindow({ openTarget: p }))
     openQueue.length = 0
+  } else if (argvTarget) {
+    createWindow({ openTarget: argvTarget })
   } else {
     createWindow()
   }

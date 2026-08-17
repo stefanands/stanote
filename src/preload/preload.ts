@@ -54,6 +54,10 @@ const api = {
     },
     onState: (cb: (state: RadioState) => void): (() => void) => on<RadioState>('radio:state', cb)
   },
+  /** Windows : accorde les contrôles natifs en surimpression au thème. */
+  syncTitleBarTheme: (theme: 'dark' | 'light'): void => {
+    ipcRenderer.send('window:titleBarTheme', theme)
+  },
   /** URL locale d'aperçu d'un document (null si le serveur n'a pas démarré). */
   docUrl: (path: string): Promise<string | null> => ipcRenderer.invoke('doc:url', path),
   pdf: {

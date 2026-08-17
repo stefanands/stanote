@@ -1,0 +1,35 @@
+name: Windows build (test)
+
+# Build de test pour le portage Windows : produit un installeur .exe
+# téléchargeable dans l'onglet Actions (aucune publication de release).
+# Sert de vérification que node-pty se recompile et que le paquet se construit.
+on:
+  push:
+    branches: [windows]
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Build & package (Windows, non signé)
+        run: |
+          npx electron-vite build
+          npx electron-builder --win --publish never
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: stanote-windows-installer
+          path: release/*.exe
+          if-no-files-found: error

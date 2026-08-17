@@ -1,6 +1,6 @@
 import { BrowserWindow, dialog, ipcMain, shell, type WebContents } from 'electron'
 import { promises as fsp } from 'fs'
-import { basename, dirname, join } from 'path'
+import { basename, dirname, join, sep } from 'path'
 import chokidar, { type FSWatcher } from 'chokidar'
 import type { TreeNode, WorkspaceInfo } from '../shared/types'
 
@@ -147,7 +147,7 @@ export function registerFsHandlers(): void {
     const target = join(destDir, basename(src))
     if (target === src) return src
     // Empêche de déplacer un dossier dans lui-même ou l'un de ses descendants.
-    if (destDir === src || destDir.startsWith(src + '/')) {
+    if (destDir === src || destDir.startsWith(src + sep)) {
       throw new Error('cannot move into itself')
     }
     await fsp.rename(src, target)

@@ -58,8 +58,27 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  release-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # Recompile node-pty pour Windows (impossible depuis macOS).
+      - run: npm ci
+
+      - name: Build & publish (Windows)
+        run: |
+          npx electron-vite build
+          npx electron-builder --win --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   publish-release:
-    needs: [release-macos, release-linux]
+    needs: [release-macos, release-linux, release-windows]
     runs-on: ubuntu-latest
     steps:
       - name: Publish GitHub Release

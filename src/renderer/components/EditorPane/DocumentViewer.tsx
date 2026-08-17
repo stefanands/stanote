@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { basename, dirname } from '../../lib/path'
 
 type Kind = 'pdf' | 'image' | 'html'
 
@@ -21,7 +22,7 @@ function imageMime(path: string): string {
  *  relatifs du document se chargent, sans navigation de l'iframe vers une
  *  URL personnalisée (que macOS tenterait d'ouvrir comme app externe). */
 function withBase(html: string, path: string): string {
-  const dir = path.slice(0, path.lastIndexOf('/'))
+  const dir = dirname(path)
   const base = `<base href="stanote-file://local${encodeURI(dir)}/">`
   if (/<head[^>]*>/i.test(html)) return html.replace(/<head[^>]*>/i, (m) => m + base)
   return base + html
@@ -85,7 +86,7 @@ export default function DocumentViewer({ path, kind, content }: Props): JSX.Elem
 
   if (kind === 'image') {
     return (
-      <div className="doc-image">{url && <img src={url} alt={path.split('/').pop()} />}</div>
+      <div className="doc-image">{url && <img src={url} alt={basename(path)} />}</div>
     )
   }
   if (kind === 'html') {

@@ -3,6 +3,7 @@ import type { TreeNode } from '../../../shared/types'
 import { openFolderDialog, useWorkspace } from '../../stores/workspace'
 import { fileKind, useTabs } from '../../stores/tabs'
 import { useT } from '../../i18n'
+import { basename, dirname, isInside } from '../../lib/path'
 import Icon, { type IconName } from '../Icon'
 
 interface ContextMenuState {
@@ -75,7 +76,7 @@ export default function FileTree(): JSX.Element {
     setMenu({ x: e.clientX, y: e.clientY, node })
   }
 
-  const parentDirOf = (path: string): string => path.slice(0, path.lastIndexOf('/'))
+  const parentDirOf = (path: string): string => dirname(path)
 
   const folderFor = (node: TreeNode | null): string => {
     if (!node) return rootPath!
@@ -146,7 +147,7 @@ export default function FileTree(): JSX.Element {
     if (!edit || !name || !rootPath) return
     try {
       if (edit.mode === 'rename') {
-        if (name === edit.targetPath.split('/').pop()) return
+        if (name === basename(edit.targetPath)) return
         const newPath = await window.stancode.fs.rename(edit.targetPath, name)
         handleMoved(edit.targetPath, newPath)
       } else if (edit.mode === 'create-file') {
@@ -163,7 +164,7 @@ export default function FileTree(): JSX.Element {
   const moveTo = async (destDir: string, src: string | null): Promise<void> => {
     if (!src) return
     if (destDir === parentDirOf(src)) return // déjà dans ce dossier
-    if (destDir === src || destDir.startsWith(src + '/')) return // dans soi-même
+    if (isInside(src, destDir)) return // dans soi-même ou un descendant
     try {
       const newPath = await window.stancode.fs.move(src, destDir)
       handleMoved(src, newPath)
@@ -409,7 +410,7 @@ function TreeLevel(props: TreeLevelProps): JSX.Element {
 }
 
 function parentDirOf(path: string): string {
-  return path.slice(0, path.lastIndexOf('/'))
+  return dirname(path)
 }
 
 function EditRow(props: {

@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { basename, sepOf } from '../lib/path'
 
 export interface Tab {
   /** clé de l'onglet : chemin absolu, ou `untitled://N` pour une note non enregistrée */
@@ -66,7 +67,7 @@ export function fileKind(path: string): FileKind {
   return 'other'
 }
 
-const nameOf = (path: string): string => path.split('/').pop() ?? path
+const nameOf = (path: string): string => basename(path)
 
 function patchTab(tabs: Tab[], path: string, patch: Partial<Tab>): Tab[] {
   return tabs.map((t) => (t.path === path ? { ...t, ...patch } : t))
@@ -277,7 +278,11 @@ export const useTabs = create<TabsState>((set, get) => ({
   handleMoved: (oldPath, newPath) => {
     // Remappe le chemin exact ET tout descendant (dossier déplacé/renommé).
     const remap = (p: string): string =>
-      p === oldPath ? newPath : p.startsWith(oldPath + '/') ? newPath + p.slice(oldPath.length) : p
+      p === oldPath
+        ? newPath
+        : p.startsWith(oldPath + sepOf(oldPath))
+          ? newPath + p.slice(oldPath.length)
+          : p
     set((s) => {
       const contents: Record<string, string> = {}
       for (const [p, c] of Object.entries(s.contents)) contents[remap(p)] = c

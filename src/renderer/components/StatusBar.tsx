@@ -3,6 +3,7 @@ import { useWorkspace } from '../stores/workspace'
 import { useTheme } from '../stores/theme'
 import { useFont, FONT_PAIRS } from '../stores/font'
 import { useI18n, useT } from '../i18n'
+import { relativeTo } from '../lib/path'
 import Icon from './Icon'
 import RadioPlayer from './RadioPlayer'
 
@@ -17,8 +18,8 @@ export default function StatusBar(): JSX.Element {
   const active = tabs.find((tab) => tab.path === activePath)
   const relative = active?.untitled
     ? `${active.name} — ${t('untitled')}`
-    : active && rootPath && active.path.startsWith(rootPath)
-      ? active.path.slice(rootPath.length + 1)
+    : active && rootPath
+      ? relativeTo(rootPath, active.path)
       : active?.path
 
   return (

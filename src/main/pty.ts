@@ -37,8 +37,10 @@ export function registerPtyHandlers(): void {
   ipcMain.handle('pty:spawn', (event, opts: { cwd?: string; cols: number; rows: number }): void => {
     const id = event.sender.id
     killProc(id)
+    // Windows : ignorer SHELL (git-bash le renseigne avec un chemin unix
+    // inexploitable par pty.spawn) et prendre PowerShell.
     const shell =
-      process.env['SHELL'] || (process.platform === 'win32' ? 'powershell.exe' : '/bin/zsh')
+      process.platform === 'win32' ? 'powershell.exe' : process.env['SHELL'] || '/bin/zsh'
     const p = pty.spawn(shell, [], {
       name: 'xterm-256color',
       cwd: opts.cwd || homedir(),

@@ -28,7 +28,7 @@ function fuzzyScore(rel: string, query: string): number | null {
   const q = query.toLowerCase()
   const substrIdx = hay.indexOf(q)
   if (substrIdx >= 0) {
-    const nameIdx = hay.lastIndexOf('/') + 1
+    const nameIdx = Math.max(hay.lastIndexOf('/'), hay.lastIndexOf('\\')) + 1
     return substrIdx >= nameIdx ? substrIdx - nameIdx : 100 + substrIdx
   }
   let i = 0

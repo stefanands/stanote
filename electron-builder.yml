@@ -47,6 +47,22 @@ mac:
   # CSC_LINK) ; sinon build non signé. En local, `npm run dist:mac` désactive la
   # découverte d'identité (CSC_IDENTITY_AUTO_DISCOVERY=false) pour rester non signé.
 
+win:
+  target:
+    - nsis
+  icon: build/icon.ico
+  # Non signé : Windows SmartScreen affichera un avertissement au 1er lancement
+  # (« Informations complémentaires » → « Exécuter quand même »). Une signature
+  # Authenticode le supprimerait, comme la notarisation Apple côté macOS.
+
+nsis:
+  oneClick: false # laisse choisir le dossier d'installation
+  perMachine: false # installation par utilisateur : pas d'élévation UAC
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Stanote
+
 linux:
   target:
     - AppImage

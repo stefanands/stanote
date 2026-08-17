@@ -33,9 +33,16 @@ let claudeBin: string | null | undefined
 async function resolveClaude(): Promise<string | null> {
   if (claudeBin !== undefined) return claudeBin
   claudeBin = await new Promise<string | null>((resolve) => {
-    execFile(process.env['SHELL'] ?? '/bin/zsh', ['-lc', 'command -v claude'], (err, stdout) => {
-      resolve(err ? null : stdout.trim().split('\n').pop() || null)
-    })
+    if (process.platform === 'win32') {
+      // `where` liste les correspondances du PATH ; on prend la première.
+      execFile('where', ['claude'], { shell: true }, (err, stdout) => {
+        resolve(err ? null : stdout.trim().split(/\r?\n/)[0] || null)
+      })
+    } else {
+      execFile(process.env['SHELL'] ?? '/bin/zsh', ['-lc', 'command -v claude'], (err, stdout) => {
+        resolve(err ? null : stdout.trim().split('\n').pop() || null)
+      })
+    }
   })
   return claudeBin
 }
@@ -73,11 +80,16 @@ export function registerClaudeHandlers(): void {
     ]
     if (state.sessionId) args.push('--resume', state.sessionId)
 
+    const isWin = process.platform === 'win32'
     const child = spawn(bin, args, {
       cwd,
+      // Windows : `claude` est un .cmd, non exécutable sans passer par le shell.
+      ...(isWin ? { shell: true } : {}),
       env: {
         ...process.env,
-        PATH: `${dirname(bin)}:/opt/homebrew/bin:/usr/local/bin:${process.env['PATH'] ?? ''}`
+        PATH: isWin
+          ? `${dirname(bin)};${process.env['PATH'] ?? ''}`
+          : `${dirname(bin)}:/opt/homebrew/bin:/usr/local/bin:${process.env['PATH'] ?? ''}`
       }
     })
     state.child = child

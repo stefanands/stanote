@@ -22,6 +22,7 @@ import { useUi, type Layout } from './stores/ui'
 import { useTheme } from './stores/theme'
 import { useFont, applyFont, FONT_PAIRS } from './stores/font'
 import { useI18n, useT, type TKey } from './i18n'
+import { dirname } from './lib/path'
 import milkdownFrameDark from '@milkdown/crepe/theme/frame-dark.css?inline'
 import milkdownFrameLight from '@milkdown/crepe/theme/frame.css?inline'
 
@@ -109,6 +110,8 @@ export default function App(): JSX.Element {
 
   useEffect(() => {
     document.documentElement.dataset['theme'] = theme
+    // Windows : accorde les contrôles natifs en surimpression au thème.
+    window.stancode.syncTitleBarTheme(theme)
     let styleTag = document.getElementById('milkdown-theme') as HTMLStyleElement | null
     if (!styleTag) {
       styleTag = document.createElement('style')
@@ -138,7 +141,7 @@ export default function App(): JSX.Element {
         return
       }
       // Sinon c'est un fichier : ouvrir son dossier parent + le fichier.
-      const parent = path.slice(0, path.lastIndexOf('/'))
+      const parent = dirname(path)
       const pw = await window.stancode.fs.openPath(parent)
       if (pw) {
         useWorkspace.getState().setWorkspace(pw)
@@ -157,7 +160,7 @@ export default function App(): JSX.Element {
   useEffect(() => {
     const target = window.stancode.openTarget
     if (target) {
-      const parent = target.slice(0, target.lastIndexOf('/')) || '/'
+      const parent = dirname(target)
       void openWorkspaceByPath(parent).then((ok) => {
         if (ok) void useTabs.getState().openFile(target)
       })
