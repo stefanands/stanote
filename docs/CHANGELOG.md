@@ -4,6 +4,28 @@ All notable changes to Stanote are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## \[1.3.1] — 2026-08-28
+
+### Added
+
+* Two files side by side: drag a tab onto the right half of the editor to split
+  it into two resizable columns, each with its own tabs.
+
+* Scroll position is remembered per file, so switching tabs no longer jumps back
+  to the top.
+
+### Changed
+
+* Heading levels are now indented step by step (deeper levels dimmed), making a
+  long document's structure readable at a glance.
+
+* Tables size themselves to their content, with a distinct header row and first
+  column.
+
+### Fixed
+
+* Double-clicking a file no longer opens two tabs for it.
+
 ## \[1.3.0] — 2026-07-28
 
 ### Added
