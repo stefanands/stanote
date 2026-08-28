@@ -1,5 +1,8 @@
 import { create } from 'zustand'
 
+/** Colonne d'édition : 0 = gauche (toujours présente), 1 = droite (vue double). */
+export type PaneId = 0 | 1
+
 export interface Tab {
   /** clé de l'onglet : chemin absolu, ou `untitled://N` pour une note non enregistrée */
   path: string
@@ -11,17 +14,25 @@ export interface Tab {
   version: number
   /** note créée à la volée, pas encore enregistrée sur le disque */
   untitled?: boolean
+  /** colonne d'affichage ; un fichier n'est ouvert que dans une seule */
+  pane: PaneId
 }
 
 let untitledCounter = 0
 
 interface TabsState {
   tabs: Tab[]
-  activePath: string | null
+  /** onglet actif de chaque colonne */
+  activeByPane: [string | null, string | null]
+  /** colonne où atterrissent les nouvelles ouvertures */
+  focusedPane: PaneId
   contents: Record<string, string>
   openFile: (path: string) => Promise<void>
   newUntitled: () => void
   activate: (path: string) => void
+  /** Déplace un onglet vers une colonne (glisser-déposer ; ouvre la vue double). */
+  moveTabToPane: (path: string, pane: PaneId) => void
+  focusPane: (pane: PaneId) => void
   cycle: (dir: 1 | -1) => void
   updateContent: (path: string, markdown: string) => void
   saveNow: (path: string) => Promise<void>
@@ -41,6 +52,8 @@ interface TabsState {
 
 const AUTOSAVE_DELAY_MS = 500
 const saveTimers = new Map<string, ReturnType<typeof setTimeout>>()
+/** Ouvertures en cours : évite deux onglets pour un même fichier (double clic). */
+const opening = new Set<string>()
 
 const MARKDOWN = /\.(md|markdown|txt)$/i
 const HTML = /\.html?$/i
@@ -74,51 +87,110 @@ function patchTab(tabs: Tab[], path: string, patch: Partial<Tab>): Tab[] {
 
 export const useTabs = create<TabsState>((set, get) => ({
   tabs: [],
-  activePath: null,
+  activeByPane: [null, null],
+  focusedPane: 0,
   contents: {},
 
   openFile: async (path) => {
-    const { tabs } = get()
-    if (tabs.some((t) => t.path === path)) {
-      set({ activePath: path })
+    if (get().tabs.some((t) => t.path === path)) {
+      get().activate(path)
       return
     }
-    let content = ''
-    if (isEditable(path)) {
-      try {
-        content = await window.stancode.fs.readFile(path)
-      } catch (err) {
-        console.error(err)
+    // Ouverture déjà lancée (double clic) : ne pas en démarrer une seconde,
+    // sinon les deux appels franchissent le test ci-dessus pendant la lecture
+    // du fichier et créent deux onglets pour le même chemin.
+    if (opening.has(path)) return
+    opening.add(path)
+    try {
+      let content = ''
+      if (isEditable(path)) {
+        try {
+          content = await window.stancode.fs.readFile(path)
+        } catch (err) {
+          console.error(err)
+          return
+        }
+      }
+      // Re-vérifié après l'attente : l'onglet a pu apparaître entre-temps.
+      if (get().tabs.some((t) => t.path === path)) {
+        get().activate(path)
         return
       }
+      set((s) => {
+        const pane = s.focusedPane
+        const activeByPane = [...s.activeByPane] as [string | null, string | null]
+        activeByPane[pane] = path
+        return {
+          tabs: [
+            ...s.tabs,
+            { path, name: nameOf(path), dirty: false, conflict: false, version: 0, pane }
+          ],
+          activeByPane,
+          contents: { ...s.contents, [path]: content }
+        }
+      })
+    } finally {
+      opening.delete(path)
     }
-    set((s) => ({
-      tabs: [...s.tabs, { path, name: nameOf(path), dirty: false, conflict: false, version: 0 }],
-      activePath: path,
-      contents: { ...s.contents, [path]: content }
-    }))
   },
 
   newUntitled: () => {
     const key = `untitled://${++untitledCounter}`
-    set((s) => ({
-      tabs: [
-        ...s.tabs,
-        { path: key, name: 'sans-titre.md', dirty: false, conflict: false, version: 0, untitled: true }
-      ],
-      activePath: key,
-      contents: { ...s.contents, [key]: '' }
-    }))
+    set((s) => {
+      const pane = s.focusedPane
+      const activeByPane = [...s.activeByPane] as [string | null, string | null]
+      activeByPane[pane] = key
+      return {
+        tabs: [
+          ...s.tabs,
+          {
+            path: key,
+            name: 'sans-titre.md',
+            dirty: false,
+            conflict: false,
+            version: 0,
+            untitled: true,
+            pane
+          }
+        ],
+        activeByPane,
+        contents: { ...s.contents, [key]: '' }
+      }
+    })
   },
 
-  activate: (path) => set({ activePath: path }),
+  activate: (path) =>
+    set((s) => {
+      const tab = s.tabs.find((t) => t.path === path)
+      if (!tab) return s
+      const activeByPane = [...s.activeByPane] as [string | null, string | null]
+      activeByPane[tab.pane] = path
+      return { activeByPane, focusedPane: tab.pane }
+    }),
+
+  focusPane: (pane) => set({ focusedPane: pane }),
+
+  moveTabToPane: (path, pane) =>
+    set((s) => {
+      const tab = s.tabs.find((t) => t.path === path)
+      if (!tab || tab.pane === pane) return s
+      const tabs = s.tabs.map((t) => (t.path === path ? { ...t, pane } : t))
+      const activeByPane = [...s.activeByPane] as [string | null, string | null]
+      activeByPane[pane] = path
+      // La colonne d'origine se rabat sur un onglet restant (ou se vide).
+      if (activeByPane[tab.pane] === path) {
+        activeByPane[tab.pane] = tabs.find((t) => t.pane === tab.pane)?.path ?? null
+      }
+      return { tabs, activeByPane, focusedPane: pane }
+    }),
 
   cycle: (dir) => {
-    const { tabs, activePath } = get()
-    if (tabs.length < 2 || !activePath) return
-    const i = tabs.findIndex((t) => t.path === activePath)
-    const next = tabs[(i + dir + tabs.length) % tabs.length]
-    set({ activePath: next.path })
+    const { tabs, activeByPane, focusedPane } = get()
+    const paneTabs = tabs.filter((t) => t.pane === focusedPane)
+    const current = activeByPane[focusedPane]
+    if (paneTabs.length < 2 || !current) return
+    const i = paneTabs.findIndex((t) => t.path === current)
+    get().activate(paneTabs[(i + dir + paneTabs.length) % paneTabs.length].path)
   },
 
   updateContent: (path, markdown) => {
@@ -157,17 +229,18 @@ export const useTabs = create<TabsState>((set, get) => ({
   },
 
   saveActive: async () => {
-    const { activePath, tabs } = get()
+    const activePath = activePathOf(get())
     if (!activePath) return
-    if (tabs.find((t) => t.path === activePath)?.untitled) await get().saveAsActive()
+    if (get().tabs.find((t) => t.path === activePath)?.untitled) await get().saveAsActive()
     else await get().saveNow(activePath)
   },
 
   // « Enregistrer sous » pour une note sans titre : dialogue puis conversion en
   // onglet-fichier normal.
   saveAsActive: async () => {
-    const { activePath, tabs, contents } = get()
+    const activePath = activePathOf(get())
     if (!activePath) return
+    const { tabs, contents } = get()
     const tab = tabs.find((t) => t.path === activePath)
     if (!tab || !tab.untitled) {
       await get().saveNow(activePath)
@@ -179,6 +252,10 @@ export const useTabs = create<TabsState>((set, get) => ({
       const nextContents = { ...s.contents }
       nextContents[newPath] = nextContents[activePath] ?? ''
       delete nextContents[activePath]
+      const activeByPane = s.activeByPane.map((p) => (p === activePath ? newPath : p)) as [
+        string | null,
+        string | null
+      ]
       return {
         contents: nextContents,
         tabs: s.tabs.map((t) =>
@@ -186,7 +263,7 @@ export const useTabs = create<TabsState>((set, get) => ({
             ? { ...t, path: newPath, name: nameOf(newPath), untitled: false, dirty: false }
             : t
         ),
-        activePath: newPath
+        activeByPane
       }
     })
   },
@@ -194,20 +271,28 @@ export const useTabs = create<TabsState>((set, get) => ({
   closeTab: async (path) => {
     await get().saveNow(path)
     set((s) => {
-      const idx = s.tabs.findIndex((t) => t.path === path)
+      const closed = s.tabs.find((t) => t.path === path)
+      if (!closed) return s
+      const paneTabs = s.tabs.filter((t) => t.pane === closed.pane)
+      const idx = paneTabs.findIndex((t) => t.path === path)
       const tabs = s.tabs.filter((t) => t.path !== path)
       const contents = { ...s.contents }
       delete contents[path]
-      let activePath = s.activePath
-      if (activePath === path) {
-        activePath = tabs.length ? tabs[Math.min(idx, tabs.length - 1)].path : null
+
+      const activeByPane = [...s.activeByPane] as [string | null, string | null]
+      if (activeByPane[closed.pane] === path) {
+        // Onglet voisin dans la même colonne, sinon la colonne se vide.
+        const rest = paneTabs.filter((t) => t.path !== path)
+        activeByPane[closed.pane] = rest.length ? rest[Math.min(idx, rest.length - 1)].path : null
       }
-      return { tabs, contents, activePath }
+      // La colonne de droite vidée referme la vue double.
+      const focusedPane = tabs.some((t) => t.pane === 1) ? s.focusedPane : 0
+      return { tabs, contents, activeByPane, focusedPane }
     })
   },
 
   closeActive: async () => {
-    const { activePath } = get()
+    const activePath = activePathOf(get())
     if (activePath) await get().closeTab(activePath)
   },
 
@@ -264,13 +349,22 @@ export const useTabs = create<TabsState>((set, get) => ({
     if (fromPath === toPath) return
     set((s) => {
       const from = s.tabs.findIndex((t) => t.path === fromPath)
-      if (from < 0 || !s.tabs.some((t) => t.path === toPath)) return s
+      const target = s.tabs.find((t) => t.path === toPath)
+      if (from < 0 || !target) return s
       const tabs = [...s.tabs]
       const [moved] = tabs.splice(from, 1)
       const insert = tabs.findIndex((t) => t.path === toPath) + (before ? 0 : 1)
-      if (insert === from) return s // même position : ne rien réécrire
-      tabs.splice(insert, 0, moved)
-      return { tabs }
+      // Glisser un onglet sur la barre de l'autre colonne l'y déplace.
+      const changedPane = moved.pane !== target.pane
+      tabs.splice(insert, 0, changedPane ? { ...moved, pane: target.pane } : moved)
+      if (!changedPane && insert === from) return s // rien n'a bougé
+      if (!changedPane) return { tabs }
+      const activeByPane = [...s.activeByPane] as [string | null, string | null]
+      activeByPane[target.pane] = fromPath
+      if (activeByPane[moved.pane] === fromPath) {
+        activeByPane[moved.pane] = tabs.find((t) => t.pane === moved.pane)?.path ?? null
+      }
+      return { tabs, activeByPane, focusedPane: target.pane }
     })
   },
 
@@ -286,9 +380,29 @@ export const useTabs = create<TabsState>((set, get) => ({
           const np = remap(t.path)
           return np === t.path ? t : { ...t, path: np, name: nameOf(np) }
         }),
-        activePath: s.activePath ? remap(s.activePath) : null,
+        activeByPane: s.activeByPane.map((p) => (p ? remap(p) : null)) as [
+          string | null,
+          string | null
+        ],
         contents
       }
     })
   }
 }))
+
+/** Chemin actif de la colonne qui a le focus. */
+export function activePathOf(s: {
+  activeByPane: [string | null, string | null]
+  focusedPane: PaneId
+}): string | null {
+  return s.activeByPane[s.focusedPane]
+}
+
+/** Onglet actif de la colonne qui a le focus (hook réactif). */
+export function useActiveTab(): Tab | undefined {
+  const tabs = useTabs((s) => s.tabs)
+  const activeByPane = useTabs((s) => s.activeByPane)
+  const focusedPane = useTabs((s) => s.focusedPane)
+  const path = activeByPane[focusedPane]
+  return path ? tabs.find((t) => t.path === path) : undefined
+}

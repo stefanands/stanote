@@ -10,12 +10,23 @@ import type { Locale } from '../../i18n'
 import FindBar from './FindBar'
 
 interface Props {
+  /** chemin du fichier : sert à mémoriser la position de lecture */
+  path: string
   initialValue: string
   locale: Locale
   onChange: (markdown: string) => void
 }
 
-export default function MilkdownEditor({ initialValue, locale, onChange }: Props): JSX.Element {
+/* Position de défilement par fichier : changer d'onglet démonte l'éditeur, on
+   restaure donc la position à la réouverture plutôt que de repartir en haut. */
+const scrollByPath = new Map<string, number>()
+
+export default function MilkdownEditor({
+  path,
+  initialValue,
+  locale,
+  onChange
+}: Props): JSX.Element {
   const rootRef = useRef<HTMLDivElement>(null)
   const onChangeRef = useRef(onChange)
   onChangeRef.current = onChange
@@ -47,13 +58,21 @@ export default function MilkdownEditor({ initialValue, locale, onChange }: Props
     })
 
     let disposed = false
+    const host = rootRef.current
     void crepe.create().then(() => {
-      if (disposed) void crepe.destroy()
-      else readyRef.current = true
+      if (disposed) {
+        void crepe.destroy()
+        return
+      }
+      readyRef.current = true
+      // Restaure la position après le rendu du document.
+      const top = scrollByPath.get(path)
+      if (top && host) requestAnimationFrame(() => host.scrollTo({ top }))
     })
 
     return () => {
       disposed = true
+      if (host) scrollByPath.set(path, host.scrollTop)
       crepeRef.current = null
       try {
         void crepe.destroy()
