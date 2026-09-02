@@ -48,6 +48,29 @@ function send(id: number, event: ClaudeEvent): void {
 export function registerClaudeHandlers(): void {
   ipcMain.handle('claude:available', async () => (await resolveClaude()) !== null)
 
+  /* Session ouverte ? `claude auth status --json` renvoie { loggedIn }. Permet
+     de prévenir avant le premier envoi (sinon le CLI reste muet et l'attente
+     tourne dans le vide). null = impossible de déterminer. */
+  ipcMain.handle('claude:loggedIn', async (): Promise<boolean | null> => {
+    const bin = await resolveClaude()
+    if (!bin) return null
+    return new Promise((resolve) => {
+      execFile(
+        bin,
+        ['auth', 'status', '--json'],
+        { timeout: 10_000, ...(process.platform === 'win32' ? { shell: true } : {}) },
+        (err, stdout) => {
+          if (err && !stdout) return resolve(null)
+          try {
+            resolve(Boolean((JSON.parse(stdout) as { loggedIn?: boolean }).loggedIn))
+          } catch {
+            resolve(null)
+          }
+        }
+      )
+    })
+  })
+
   ipcMain.handle('claude:send', async (event, prompt: string, cwd: string) => {
     const id = event.sender.id
     const state = stateFor(id)
@@ -85,11 +108,21 @@ export function registerClaudeHandlers(): void {
     child.stdin.end()
 
     let gotResult = false
+    let gotAnything = false
     const stderrChunks: string[] = []
     child.stderr.on('data', (d: Buffer) => stderrChunks.push(d.toString()))
 
+    /* Garde-fou : un CLI qui n'a pas de session ouverte peut rester muet sans
+       jamais rendre la main — sans ça l'interface attendrait indéfiniment. */
+    const silenceTimer = setTimeout(() => {
+      if (gotAnything || state.child !== child) return
+      child.kill()
+      send(id, { type: 'error', message: 'claude-no-response' })
+    }, 25_000)
+
     const rl = createInterface({ input: child.stdout })
     rl.on('line', (line) => {
+      gotAnything = true
       let msg: Record<string, unknown>
       try {
         msg = JSON.parse(line)
@@ -125,11 +158,16 @@ export function registerClaudeHandlers(): void {
 
     child.on('close', (code) => {
       state.child = null
+      clearTimeout(silenceTimer)
       if (!gotResult) {
         const detail = stderrChunks.join('').trim().slice(0, 400)
+        // Le CLI est installé mais la session n'est pas ouverte : cas courant
+        // et sans rapport avec une vraie panne, on le distingue pour guider.
+        const needsLogin =
+          /log ?in|login|authenticat|credential|unauthorized|401|api key|invalid_?api/i.test(detail)
         send(id, {
           type: 'error',
-          message: code === null ? 'cancelled' : detail || `exit ${code}`
+          message: code === null ? 'cancelled' : needsLogin ? 'claude-not-authenticated' : detail || `exit ${code}`
         })
       }
     })

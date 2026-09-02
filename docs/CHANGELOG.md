@@ -4,9 +4,12 @@ All notable changes to Stanote are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## \[1.3.1] — 2026-08-28
+## \[1.4.0] — 2026-09-02
 
 ### Added
+
+* Terminal tabs: open several shells in the panel, switch between them, close
+  the ones you no longer need.
 
 * Two files side by side: drag a tab onto the right half of the editor to split
   it into two resizable columns, each with its own tabs.
@@ -25,6 +28,16 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Fixed
 
 * Double-clicking a file no longer opens two tabs for it.
+
+* "Ask Claude" no longer waits forever when the CLI is installed but not signed
+  in: the panel now checks the session on open and says what to do.
+
+### Changed
+
+* Find in note (`⌘F`) jumps to the first match as you type, highlights matches
+  more clearly, and marks their position along the right edge of the document.
+
+* New app icon, also used for the "new tab" buttons.
 
 ## \[1.3.0] — 2026-07-28
 

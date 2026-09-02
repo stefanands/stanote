@@ -2,14 +2,25 @@ import { app, ipcMain } from 'electron'
 import * as pty from 'node-pty'
 import { homedir } from 'os'
 
-/** Un pty par fenêtre (webContents.id). */
-const byWin = new Map<number, pty.IPty>()
+/** Plusieurs terminaux par fenêtre : Map<webContents.id, Map<idOnglet, pty>>. */
+const byWin = new Map<number, Map<string, pty.IPty>>()
 
-function killProc(id: number): void {
+function terminalsOf(winId: number): Map<string, pty.IPty> {
+  let m = byWin.get(winId)
+  if (!m) {
+    m = new Map()
+    byWin.set(winId, m)
+  }
+  return m
+}
+
+function killProc(winId: number, termId: string): void {
   // On retire l'entrée avant kill() : l'onExit du processus tué voit qu'il
-  // n'est plus le processus courant de la fenêtre et n'envoie pas pty:exit.
-  const p = byWin.get(id)
-  byWin.delete(id)
+  // n'est plus le processus courant de l'onglet et n'envoie pas pty:exit.
+  const terms = byWin.get(winId)
+  if (!terms) return
+  const p = terms.get(termId)
+  terms.delete(termId)
   try {
     p?.kill()
   } catch {
@@ -30,46 +41,54 @@ function shellEnv(): Record<string, string> {
 }
 
 export function disposePtyForWebContents(id: number): void {
-  killProc(id)
+  const terms = byWin.get(id)
+  if (!terms) return
+  for (const termId of [...terms.keys()]) killProc(id, termId)
+  byWin.delete(id)
 }
 
 export function registerPtyHandlers(): void {
-  ipcMain.handle('pty:spawn', (event, opts: { cwd?: string; cols: number; rows: number }): void => {
-    const id = event.sender.id
-    killProc(id)
-    const shell =
-      process.env['SHELL'] || (process.platform === 'win32' ? 'powershell.exe' : '/bin/zsh')
-    const p = pty.spawn(shell, [], {
-      name: 'xterm-256color',
-      cwd: opts.cwd || homedir(),
-      env: shellEnv(),
-      cols: opts.cols,
-      rows: opts.rows
-    })
-    byWin.set(id, p)
-    const sender = event.sender
-    p.onData((data) => {
-      if (byWin.get(id) === p && !sender.isDestroyed()) sender.send('pty:data', data)
-    })
-    p.onExit(({ exitCode }) => {
-      if (byWin.get(id) !== p) return // tué volontairement (relance) : silencieux
-      byWin.delete(id)
-      if (!sender.isDestroyed()) sender.send('pty:exit', exitCode)
-    })
+  ipcMain.handle(
+    'pty:spawn',
+    (event, termId: string, opts: { cwd?: string; cols: number; rows: number }): void => {
+      const winId = event.sender.id
+      killProc(winId, termId) // relance éventuelle du même onglet
+      const shell =
+        process.env['SHELL'] || (process.platform === 'win32' ? 'powershell.exe' : '/bin/zsh')
+      const p = pty.spawn(shell, [], {
+        name: 'xterm-256color',
+        cwd: opts.cwd || homedir(),
+        env: shellEnv(),
+        cols: opts.cols,
+        rows: opts.rows
+      })
+      terminalsOf(winId).set(termId, p)
+      const sender = event.sender
+      p.onData((data) => {
+        if (byWin.get(winId)?.get(termId) === p && !sender.isDestroyed())
+          sender.send('pty:data', termId, data)
+      })
+      p.onExit(({ exitCode }) => {
+        const terms = byWin.get(winId)
+        if (terms?.get(termId) !== p) return // tué volontairement : silencieux
+        terms.delete(termId)
+        if (!sender.isDestroyed()) sender.send('pty:exit', termId, exitCode)
+      })
+    }
+  )
+
+  ipcMain.on('pty:input', (event, termId: string, data: string) => {
+    byWin.get(event.sender.id)?.get(termId)?.write(data)
   })
 
-  ipcMain.on('pty:input', (event, data: string) => {
-    byWin.get(event.sender.id)?.write(data)
-  })
-
-  ipcMain.on('pty:resize', (event, cols: number, rows: number) => {
-    const p = byWin.get(event.sender.id)
+  ipcMain.on('pty:resize', (event, termId: string, cols: number, rows: number) => {
+    const p = byWin.get(event.sender.id)?.get(termId)
     if (p && cols > 0 && rows > 0) p.resize(cols, rows)
   })
 
-  ipcMain.handle('pty:kill', (event) => killProc(event.sender.id))
+  ipcMain.handle('pty:kill', (event, termId: string) => killProc(event.sender.id, termId))
 
   app.on('before-quit', () => {
-    for (const id of [...byWin.keys()]) killProc(id)
+    for (const winId of [...byWin.keys()]) disposePtyForWebContents(winId)
   })
 }

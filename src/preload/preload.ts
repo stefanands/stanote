@@ -34,6 +34,8 @@ const api = {
   },
   claude: {
     available: (): Promise<boolean> => ipcRenderer.invoke('claude:available'),
+    /** true = session ouverte, false = non connecté, null = indéterminé */
+    loggedIn: (): Promise<boolean | null> => ipcRenderer.invoke('claude:loggedIn'),
     send: (prompt: string, cwd: string): Promise<void> =>
       ipcRenderer.invoke('claude:send', prompt, cwd),
     cancel: (): Promise<void> => ipcRenderer.invoke('claude:cancel'),
@@ -60,18 +62,27 @@ const api = {
     export: (html: string, defaultName: string): Promise<boolean> =>
       ipcRenderer.invoke('pdf:export', html, defaultName)
   },
+  // Plusieurs terminaux par fenêtre : chaque message porte l'id de l'onglet.
   pty: {
-    spawn: (opts: { cwd?: string; cols: number; rows: number }): Promise<void> =>
-      ipcRenderer.invoke('pty:spawn', opts),
-    input: (data: string): void => {
-      ipcRenderer.send('pty:input', data)
+    spawn: (termId: string, opts: { cwd?: string; cols: number; rows: number }): Promise<void> =>
+      ipcRenderer.invoke('pty:spawn', termId, opts),
+    input: (termId: string, data: string): void => {
+      ipcRenderer.send('pty:input', termId, data)
     },
-    resize: (cols: number, rows: number): void => {
-      ipcRenderer.send('pty:resize', cols, rows)
+    resize: (termId: string, cols: number, rows: number): void => {
+      ipcRenderer.send('pty:resize', termId, cols, rows)
     },
-    kill: (): Promise<void> => ipcRenderer.invoke('pty:kill'),
-    onData: (cb: (data: string) => void): (() => void) => on<string>('pty:data', cb),
-    onExit: (cb: (code: number) => void): (() => void) => on<number>('pty:exit', cb)
+    kill: (termId: string): Promise<void> => ipcRenderer.invoke('pty:kill', termId),
+    onData: (cb: (termId: string, data: string) => void): (() => void) => {
+      const listener = (_e: IpcRendererEvent, termId: string, data: string): void => cb(termId, data)
+      ipcRenderer.on('pty:data', listener)
+      return () => ipcRenderer.off('pty:data', listener)
+    },
+    onExit: (cb: (termId: string, code: number) => void): (() => void) => {
+      const listener = (_e: IpcRendererEvent, termId: string, code: number): void => cb(termId, code)
+      ipcRenderer.on('pty:exit', listener)
+      return () => ipcRenderer.off('pty:exit', listener)
+    }
   },
   fs: {
     readFile: (path: string): Promise<string> => ipcRenderer.invoke('fs:readFile', path),
