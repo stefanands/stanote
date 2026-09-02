@@ -60,8 +60,8 @@ Les contributions sont les bienvenues — voir [le guide de contribution](docs/C
 
 ## Crédits
 
-L’icône de l’application et le pictogramme « nouvel onglet » sont dérivés d’une
-icône créée par **Jessiey** pour [Noun Project](https://thenounproject.com/).
+Le pictogramme « nouvel onglet » est dérivé d’une icône créée par **Jessiey**
+pour [Noun Project](https://thenounproject.com/).
 
 ## Licence
 

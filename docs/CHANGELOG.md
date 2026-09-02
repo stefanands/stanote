@@ -37,7 +37,8 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 * Find in note (`⌘F`) jumps to the first match as you type, highlights matches
   more clearly, and marks their position along the right edge of the document.
 
-* New app icon, also used for the "new tab" buttons.
+* New app icon (Stanote logo), and a clearer "new tab" pictogram on the new
+  terminal and new conversation buttons.
 
 ## \[1.3.0] — 2026-07-28
 
