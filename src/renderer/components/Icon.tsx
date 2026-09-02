@@ -19,6 +19,7 @@ export type IconName =
   | 'copy'
   | 'check'
   | 'eye'
+  | 'new-tab'
   | 'folder'
   | 'folder-open'
   | 'file'
@@ -100,6 +101,14 @@ const paths: Record<IconName, JSX.Element> = {
     </>
   ),
   check: <polyline points="3 8.5 6.5 12 13 4.5" />,
+  /* « Nouvel onglet » : cadre ouvert en haut à droite + plus. Icône pleine
+     (d'après le tracé fourni, ramené du gabarit 32 au nôtre de 16). */
+  'new-tab': (
+    <g fill="currentColor" stroke="none" transform="scale(0.5)">
+      <path d="m23.14,16.43c-.55,0-1,.45-1,1v6.57c0,.55-.45,1-1,1h-13.14c-.55,0-1-.45-1-1v-13.14c0-.55.45-1,1-1h6.57c.55,0,1-.45,1-1s-.45-1-1-1h-6.57c-1.65,0-3,1.35-3,3v13.14c0,1.65,1.35,3,3,3h13.14c1.65,0,3-1.35,3-3v-6.57c0-.55-.45-1-1-1Z" />
+      <path d="m27.17,7.88h-3.03v-3.03c0-.55-.45-1-1-1s-1,.45-1,1v3.03h-3.03c-.55,0-1,.45-1,1s.45,1,1,1h3.03v3.03c0,.55.45,1,1,1s1-.45,1-1v-3.03h3.03c.55,0,1-.45,1-1s-.45-1-1-1Z" />
+    </g>
+  ),
   eye: (
     <>
       <path d="M1.5 8S4 3.5 8 3.5 14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8Z" />

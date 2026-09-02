@@ -20,81 +20,111 @@ export const XTERM_THEMES: Record<Theme, ITheme> = {
   }
 }
 
-// Instance unique par fenêtre (le module est propre à chaque renderer). Le
-// terminal vit dans un élément DOM détaché, ré-attaché au panneau visible — il
-// survit ainsi au démontage React (changement de disposition, masquage…).
-let el: HTMLDivElement | null = null
-let term: Terminal | null = null
-let fit: FitAddon | null = null
-let spawned = false
-let detachedHolder: HTMLDivElement | null = null
+/* Un hôte par onglet de terminal. Chacun vit dans un élément DOM détaché,
+   ré-attaché au panneau visible : il survit au démontage React (changement
+   d'onglet, de disposition, passage en mode Claude…). */
+interface Host {
+  el: HTMLDivElement
+  term: Terminal
+  fit: FitAddon
+  spawned: boolean
+}
 
-export function getTerminalHost(theme: Theme, exitedText: string): HTMLDivElement {
-  if (el && term) return el
-  el = document.createElement('div')
+const hosts = new Map<string, Host>()
+let detachedHolder: HTMLDivElement | null = null
+let exitedLabel = ''
+
+/* Un seul abonnement pour toute la fenêtre : les messages portent l'id de
+   l'onglet, on les aiguille vers le bon terminal. */
+window.stancode.pty.onData((termId, data) => hosts.get(termId)?.term.write(data))
+window.stancode.pty.onExit((termId) => {
+  hosts.get(termId)?.term.write(`\r\n\x1b[90m${exitedLabel}\x1b[0m\r\n`)
+})
+
+export function getTerminalHost(id: string, theme: Theme, exitedText: string): HTMLDivElement {
+  exitedLabel = exitedText
+  const existing = hosts.get(id)
+  if (existing) return existing.el
+
+  const el = document.createElement('div')
   el.className = 'terminal-host'
-  term = new Terminal({
+  const term = new Terminal({
     fontFamily: 'Menlo, Monaco, "Courier New", monospace',
     fontSize: 13,
     scrollback: 5000,
     macOptionIsMeta: true,
     theme: XTERM_THEMES[theme]
   })
-  fit = new FitAddon()
+  const fit = new FitAddon()
   term.loadAddon(fit)
   term.open(el)
-  term.onData((data) => window.stancode.pty.input(data))
-  term.onResize(({ cols, rows }) => window.stancode.pty.resize(cols, rows))
-  window.stancode.pty.onData((data) => term?.write(data))
-  window.stancode.pty.onExit(() => term?.write(`\r\n\x1b[90m${exitedText}\x1b[0m\r\n`))
-  new ResizeObserver(() => fitTerminal()).observe(el)
+  term.onData((data) => window.stancode.pty.input(id, data))
+  term.onResize(({ cols, rows }) => window.stancode.pty.resize(id, cols, rows))
+  new ResizeObserver(() => fitTerminal(id)).observe(el)
+
+  hosts.set(id, { el, term, fit, spawned: false })
   return el
 }
 
-/** Sort l'hôte du DOM visible sans le détruire (démontage du panneau). */
-export function detachTerminalHost(): void {
-  if (!el) return
+/** Sort l'hôte du DOM visible sans le détruire (changement d'onglet). */
+export function detachTerminalHost(id: string): void {
+  const host = hosts.get(id)
+  if (!host) return
   if (!detachedHolder) detachedHolder = document.createElement('div')
-  detachedHolder.appendChild(el)
+  detachedHolder.appendChild(host.el)
 }
 
-export function fitTerminal(): void {
-  if (el && el.clientWidth > 40 && el.clientHeight > 40) fit?.fit()
+export function fitTerminal(id: string): void {
+  const host = hosts.get(id)
+  if (host && host.el.clientWidth > 40 && host.el.clientHeight > 40) host.fit.fit()
 }
 
-/** À la ré-attache (retour du mode Claude, changement de disposition) :
- *  recale la grille et force un rendu complet, sinon l'affichage peut rester
- *  vide jusqu'au prochain redimensionnement. */
-export function refreshTerminal(): void {
-  fitTerminal()
-  if (term) {
-    term.refresh(0, term.rows - 1)
-    term.scrollToBottom()
+/** À la ré-attache (retour du mode Claude, changement d'onglet ou de
+ *  disposition) : recale la grille et force un rendu complet, sinon
+ *  l'affichage peut rester vide jusqu'au prochain redimensionnement. */
+export function refreshTerminal(id: string): void {
+  fitTerminal(id)
+  const host = hosts.get(id)
+  if (host) {
+    host.term.refresh(0, host.term.rows - 1)
+    host.term.scrollToBottom()
   }
 }
 
-export function spawnTerminalIfNeeded(): void {
-  if (spawned || !term) return
-  spawned = true
-  fit?.fit()
-  window.stancode.pty.spawn({
+export function spawnTerminalIfNeeded(id: string): void {
+  const host = hosts.get(id)
+  if (!host || host.spawned) return
+  host.spawned = true
+  host.fit.fit()
+  void window.stancode.pty.spawn(id, {
     cwd: useWorkspace.getState().rootPath ?? undefined,
-    cols: term.cols,
-    rows: term.rows
+    cols: host.term.cols,
+    rows: host.term.rows
   })
 }
 
-export function restartTerminal(): void {
-  if (!term) return
-  term.clear()
-  fit?.fit()
-  window.stancode.pty.spawn({
+export function restartTerminal(id: string): void {
+  const host = hosts.get(id)
+  if (!host) return
+  host.term.clear()
+  host.fit.fit()
+  void window.stancode.pty.spawn(id, {
     cwd: useWorkspace.getState().rootPath ?? undefined,
-    cols: term.cols,
-    rows: term.rows
+    cols: host.term.cols,
+    rows: host.term.rows
   })
+}
+
+/** Ferme un onglet : tue le shell et détruit l'instance xterm. */
+export function disposeTerminal(id: string): void {
+  const host = hosts.get(id)
+  if (!host) return
+  void window.stancode.pty.kill(id)
+  host.term.dispose()
+  host.el.remove()
+  hosts.delete(id)
 }
 
 export function setTerminalTheme(theme: Theme): void {
-  if (term) term.options.theme = XTERM_THEMES[theme]
+  for (const host of hosts.values()) host.term.options.theme = XTERM_THEMES[theme]
 }

@@ -103,6 +103,32 @@ body {
   padding-right: calc(100vw - env(titlebar-area-width, 100vw) + 8px);
 }
 
+/* Vue double : deux barres d'onglets sur la même ligne, alignées chacune sur
+   sa colonne ; un filet les sépare. */
+.titlebar-tabs-split {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: stretch;
+  height: 100%;
+  margin: 0 14px;
+}
+
+.titlebar-tabs-split > div {
+  min-width: 0;
+  display: flex;
+  align-items: stretch;
+}
+
+.titlebar-tabs-split > div + div {
+  border-left: 1px solid var(--card-border);
+  padding-left: 8px;
+}
+
+.titlebar-tabs-split .titlebar-tabs {
+  margin: 0;
+}
+
 .titlebar-title {
   font-family: var(--font-mono);
   font-size: 14px;
@@ -168,6 +194,28 @@ body {
 /* Éditeur : flottant, sans bord, fond de l'interface */
 .editor-pane {
   background: var(--bg);
+  position: relative;
+}
+
+/* Vue double : la colonne qui a le focus est discrètement marquée (c'est elle
+   qui reçoit les ouvertures et les raccourcis). */
+.editor-pane.pane-focused .tabbar {
+  border-bottom-color: var(--accent);
+}
+
+/* Aperçu de la scission : glisser un onglet sur la moitié droite */
+.editor-pane.split-hint::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 40%;
+  z-index: 40;
+  pointer-events: none;
+  background: var(--selected);
+  border-left: 2px solid var(--accent);
+  border-radius: 0 10px 10px 0;
 }
 
 .pane-header {
@@ -758,6 +806,74 @@ body {
   font-weight: 700;
 }
 
+/* Hiérarchie des titres : la taille seule ne suffit pas à lire la structure
+   d'un long document (un « # » et un « ##### » démarrent à la même marge).
+   Chaque niveau est décalé d'un cran et les niveaux profonds s'atténuent. */
+.milkdown-host .milkdown .ProseMirror h2 {
+  margin-left: 14px;
+}
+
+.milkdown-host .milkdown .ProseMirror h3 {
+  margin-left: 28px;
+}
+
+.milkdown-host .milkdown .ProseMirror h4 {
+  margin-left: 42px;
+  color: var(--text-dim);
+}
+
+.milkdown-host .milkdown .ProseMirror h5 {
+  margin-left: 56px;
+  color: var(--text-dim);
+}
+
+.milkdown-host .milkdown .ProseMirror h6 {
+  margin-left: 70px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+/* Tableaux : le thème ProseMirror impose « table-layout: fixed; width: 100% »,
+   donc des colonnes toutes égales quel que soit leur contenu. On repasse en
+   largeur automatique (les colonnes redimensionnées à la main gardent la leur,
+   via l'attribut colwidth), avec en-tête et première colonne différenciés. */
+.milkdown-host .milkdown .ProseMirror table {
+  table-layout: auto;
+  width: auto;
+  min-width: 50%;
+  max-width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 10px 0;
+}
+
+.milkdown-host .milkdown .milkdown-table-block th,
+.milkdown-host .milkdown .milkdown-table-block td {
+  border-color: var(--card-border);
+  padding: 7px 14px;
+  vertical-align: top;
+}
+
+/* Ligne d'en-tête */
+.milkdown-host .milkdown .milkdown-table-block th {
+  background: var(--hover);
+  font-weight: 700;
+  color: var(--text);
+  text-align: left;
+}
+
+/* Première colonne : sert d'intitulé de ligne */
+.milkdown-host .milkdown .milkdown-table-block tr > td:first-child {
+  font-weight: 600;
+  background: var(--hover);
+}
+
+/* Lignes alternées, très discrètes, pour suivre une ligne longue */
+.milkdown-host .milkdown .milkdown-table-block tbody tr:nth-child(even) > td:not(:first-child) {
+  background: color-mix(in srgb, var(--hover) 40%, transparent);
+}
+
 /* Bloc de code (CodeMirror intégré à Crepe) : le thème par défaut ne fixe pas
    de couleur de texte, qui hérite d'un gris trop clair — peu lisible en jour. */
 .milkdown-host .milkdown-code-block .cm-content,
@@ -887,16 +1003,41 @@ body {
   border-color: var(--text-dim);
 }
 
-/* Surlignage des occurrences (plugin prosemirror-search) */
+/* Surlignage des occurrences (plugin prosemirror-search) : franc, pour se
+   repérer d'un coup d'œil ; l'occurrence courante ressort davantage. */
 .milkdown-host .ProseMirror-search-match {
   background: var(--mark);
   border-radius: 2px;
+  box-shadow: 0 0 0 1px var(--accent);
 }
 
 .milkdown-host .ProseMirror-active-search-match {
   background: var(--accent);
   color: var(--accent-contrast);
   border-radius: 2px;
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+/* Repères d'occurrences le long du bord droit : position de chaque résultat
+   dans l'ensemble du document, y compris hors de l'écran. */
+.find-rail {
+  position: absolute;
+  top: 0;
+  right: 2px;
+  bottom: 0;
+  width: 10px;
+  z-index: 55;
+  pointer-events: none;
+}
+
+.find-rail-mark {
+  position: absolute;
+  right: 2px;
+  width: 6px;
+  height: 3px;
+  border-radius: 1px;
+  background: var(--accent);
+  opacity: 0.75;
 }
 
 /* Barre d'outils de la visionneuse (bascule aperçu / code des .html) */
@@ -1081,6 +1222,85 @@ body {
 /* Fenêtre minimale : pas de traits internes en mode Claude */
 .terminal-pane.claude-mode .pane-header {
   border-bottom: none;
+}
+
+/* Onglets de terminal, dans l'en-tête du panneau */
+.term-tabs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.term-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.term-tab {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 4px 2px 8px;
+  border-radius: 5px;
+  color: var(--tab-passive);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.term-tab:hover {
+  color: var(--text);
+  background: var(--hover);
+}
+
+.term-tab.active {
+  color: var(--text);
+  background: var(--hover-strong);
+}
+
+.term-tab-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 3px;
+  color: inherit;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.term-tab:hover .term-tab-close,
+.term-tab.active .term-tab-close {
+  opacity: 0.7;
+}
+
+.term-tab-close:hover {
+  opacity: 1;
+  background: var(--hover-strong);
+}
+
+/* Bandeau « connexion requise » du panneau Claude */
+.claude-login-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 12px 0;
+  padding: 7px 10px;
+  font-size: 12px;
+  color: var(--warn-fg);
+  background: var(--warn-bg);
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.claude-login-notice svg {
+  color: var(--claude);
+  flex-shrink: 0;
 }
 
 /* Trace d'activité, repliée derrière un chevron */

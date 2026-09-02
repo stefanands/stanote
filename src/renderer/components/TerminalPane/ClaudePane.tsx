@@ -46,7 +46,7 @@ function toolLabel(name: string, locale: 'fr' | 'en'): string {
 export default function ClaudePane(): JSX.Element {
   const t = useT()
   const locale = useI18n((s) => s.locale)
-  const { messages, busy, currentTool, available, send, cancel } = useClaude()
+  const { messages, busy, currentTool, available, needsLogin, send, cancel } = useClaude()
   const [input, setInput] = useState('')
   const [openTools, setOpenTools] = useState<Set<number>>(new Set())
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -82,10 +82,17 @@ export default function ClaudePane(): JSX.Element {
 
   return (
     <div className="claude-pane">
+      {needsLogin && (
+        <div className="claude-login-notice">
+          <Icon name="sparkle" size={12} />
+          <span>{t('claudeNeedsLogin')}</span>
+        </div>
+      )}
       <div className="claude-scroll" ref={scrollRef}>
         {messages.length === 0 && (
           <div className="pane-placeholder">
             <p className="hint">{t('claudeEmpty')}</p>
+            <p className="hint">{t('claudeLoginHint')}</p>
           </div>
         )}
         {toBlocks(messages).map((block, i) => {

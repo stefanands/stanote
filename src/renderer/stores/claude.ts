@@ -16,6 +16,8 @@ interface ClaudeState {
   currentTool: string | null
   /** null = pas encore vérifié ; false = CLI `claude` introuvable */
   available: boolean | null
+  /** le CLI existe mais aucune session ouverte : il faut se connecter */
+  needsLogin: boolean
   checkAvailable: () => Promise<void>
   send: (prompt: string) => void
   cancel: () => void
@@ -27,10 +29,14 @@ export const useClaude = create<ClaudeState>((set, get) => ({
   busy: false,
   currentTool: null,
   available: null,
+  needsLogin: false,
 
   checkAvailable: async () => {
     if (get().available !== null) return
-    set({ available: await window.stancode.claude.available() })
+    const available = await window.stancode.claude.available()
+    set({ available })
+    // Prévenir avant le premier envoi plutôt que de laisser l'attente tourner.
+    if (available) set({ needsLogin: (await window.stancode.claude.loggedIn()) === false })
   },
 
   send: (prompt) => {
@@ -83,6 +89,11 @@ window.stancode.claude.onEvent((event) => {
   } else if (event.type === 'error') {
     if (event.message === 'claude-not-found') {
       useClaude.setState({ busy: false, currentTool: null, available: false })
+    } else if (
+      event.message === 'claude-not-authenticated' ||
+      event.message === 'claude-no-response'
+    ) {
+      useClaude.setState({ busy: false, currentTool: null, needsLogin: true })
     } else if (event.message === 'cancelled') {
       useClaude.setState({ busy: false, currentTool: null })
     } else {

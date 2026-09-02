@@ -17,7 +17,7 @@ import {
   restoreLastFolder,
   useWorkspace
 } from './stores/workspace'
-import { fileKind, useTabs } from './stores/tabs'
+import { activePathOf, fileKind, useTabs } from './stores/tabs'
 import { useUi, type Layout } from './stores/ui'
 import { useTheme } from './stores/theme'
 import { useFont, applyFont, FONT_PAIRS } from './stores/font'
@@ -73,8 +73,9 @@ function buildPrintHtml(bodyHtml: string, titleFont: string, bodyFont: string): 
 }
 
 function exportActivePdf(): void {
-  const { tabs, activePath, contents } = useTabs.getState()
-  const active = tabs.find((t) => t.path === activePath)
+  const state = useTabs.getState()
+  const { tabs, contents } = state
+  const active = tabs.find((t) => t.path === activePathOf(state))
   if (!active) return
   const md = contents[active.path] ?? ''
   const pair = FONT_PAIRS[useFont.getState().index]
@@ -85,8 +86,8 @@ function exportActivePdf(): void {
 
 /** Copie le chemin du fichier actif (ou du dossier ouvert à défaut). */
 function copyActivePath(): void {
-  const { tabs, activePath } = useTabs.getState()
-  const tab = tabs.find((t) => t.path === activePath)
+  const state = useTabs.getState()
+  const tab = state.tabs.find((t) => t.path === activePathOf(state))
   const path = tab && !tab.untitled ? tab.path : useWorkspace.getState().rootPath
   if (path) void navigator.clipboard.writeText(path)
 }
@@ -101,6 +102,11 @@ export default function App(): JSX.Element {
   const fontIndex = useFont((s) => s.index)
   const [layoutMenu, setLayoutMenu] = useState(false)
   const [copied, setCopied] = useState(false)
+  /** vue double active dès qu'un onglet a été glissé dans la colonne de droite */
+  const splitOpen = useTabs((s) => s.tabs.some((tab) => tab.pane === 1))
+  /** proportions des deux colonnes : les barres d'onglets de la barre de titre
+   *  s'y alignent, pour rester au-dessus de leur colonne au redimensionnement */
+  const [splitSizes, setSplitSizes] = useState<number[]>([50, 50])
 
   const onCopyPath = (): void => {
     copyActivePath()
@@ -133,6 +139,7 @@ export default function App(): JSX.Element {
     const onDrop = async (e: DragEvent): Promise<void> => {
       if (!e.dataTransfer || e.dataTransfer.files.length === 0) return // glisser interne : ignoré
       e.preventDefault()
+
       const path = window.stancode.getPathForFile(e.dataTransfer.files[0])
       if (!path) return
       const ws = await window.stancode.fs.openPath(path)
@@ -214,8 +221,8 @@ export default function App(): JSX.Element {
       } else if (mod && !e.shiftKey && e.key.toLowerCase() === 'f') {
         // Chercher/remplacer dans la note markdown active. Les fichiers code
         // (CodeMirror) gèrent leur propre Cmd+F intégré.
-        const { tabs, activePath } = useTabs.getState()
-        const tab = tabs.find((t) => t.path === activePath)
+        const state = useTabs.getState()
+        const tab = state.tabs.find((t) => t.path === activePathOf(state))
         const kind = tab ? (tab.untitled ? 'markdown' : fileKind(tab.path)) : 'other'
         if (kind === 'markdown') {
           e.preventDefault()
@@ -264,6 +271,23 @@ export default function App(): JSX.Element {
 
   const rightShown = showExplorer || showTerminal
 
+  /* Zone d'édition : une colonne, ou deux quand un onglet a été glissé à droite
+     (vue double). Les deux colonnes sont redimensionnables. */
+  const editorArea = (vId: string): JSX.Element =>
+    splitOpen ? (
+      <PanelGroup direction="horizontal" autoSaveId={vId} onLayout={setSplitSizes}>
+        <Panel key="editor-0" id="editor-0" order={1} minSize={20}>
+          <EditorPane pane={0} />
+        </Panel>
+        <PanelResizeHandle className="resize-handle vertical" />
+        <Panel key="editor-1" id="editor-1" order={2} minSize={20}>
+          <EditorPane pane={1} />
+        </Panel>
+      </PanelGroup>
+    ) : (
+      <EditorPane pane={0} />
+    )
+
   const renderLayout = (): JSX.Element => {
     if (layout === 'editor-right') {
       return (
@@ -277,7 +301,7 @@ export default function App(): JSX.Element {
             </>
           )}
           <Panel key="editor" id="editor" order={2} minSize={30} defaultSize={70}>
-            <EditorPane />
+            {editorArea('stanote:B-split')}
           </Panel>
         </PanelGroup>
       )
@@ -296,7 +320,7 @@ export default function App(): JSX.Element {
           <Panel key="main" id="main" order={2} minSize={40}>
             <PanelGroup direction="vertical" autoSaveId="stanote:C-v">
               <Panel key="editor" id="editor" order={1} minSize={20}>
-                <EditorPane />
+                {editorArea('stanote:C-split')}
               </Panel>
               {showTerminal && <PanelResizeHandle className="resize-handle horizontal" />}
               {showTerminal && (
@@ -313,7 +337,7 @@ export default function App(): JSX.Element {
     return (
       <PanelGroup key="editor-left" direction="horizontal" autoSaveId="stanote:A-h">
         <Panel key="editor" id="editor" order={1} minSize={30} defaultSize={70}>
-          <EditorPane />
+          {editorArea('stanote:A-split')}
         </Panel>
         {rightShown && (
           <>
@@ -332,8 +356,24 @@ export default function App(): JSX.Element {
   return (
     <div className="app">
       <div className="titlebar">
-        <span className="titlebar-title">stanote</span>
-        {layout === 'editor-left' ? <TabBar variant="titlebar" /> : <span className="titlebar-spacer" />}
+        {layout === 'editor-left' ? (
+          splitOpen ? (
+            // Vue double : une barre par colonne, sur la même ligne, chacune
+            // large comme sa colonne (d'où le suivi des proportions).
+            <div className="titlebar-tabs-split">
+              <div style={{ flexBasis: `${splitSizes[0] ?? 50}%` }}>
+                <TabBar variant="titlebar" pane={0} />
+              </div>
+              <div style={{ flexBasis: `${splitSizes[1] ?? 50}%` }}>
+                <TabBar variant="titlebar" pane={1} />
+              </div>
+            </div>
+          ) : (
+            <TabBar variant="titlebar" pane={0} />
+          )
+        ) : (
+          <span className="titlebar-spacer" />
+        )}
         <div className="titlebar-actions">
           <button className="tbar-btn" title={t('copyPath')} onClick={onCopyPath}>
             <Icon name={copied ? 'check' : 'copy'} />

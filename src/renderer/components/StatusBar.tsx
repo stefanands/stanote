@@ -1,4 +1,4 @@
-import { useTabs } from '../stores/tabs'
+import { useActiveTab } from '../stores/tabs'
 import { useWorkspace } from '../stores/workspace'
 import { useTheme } from '../stores/theme'
 import { useFont, FONT_PAIRS } from '../stores/font'
@@ -13,9 +13,7 @@ export default function StatusBar(): JSX.Element {
   const { theme, setTheme } = useTheme()
   const { index: fontIndex, cycle: cycleFont } = useFont()
   const { rootPath } = useWorkspace()
-  const { tabs, activePath } = useTabs()
-
-  const active = tabs.find((tab) => tab.path === activePath)
+  const active = useActiveTab()
   const relative = active?.untitled
     ? `${active.name} — ${t('untitled')}`
     : active && rootPath

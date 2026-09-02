@@ -42,7 +42,7 @@ function iconFor(node: TreeNode, open: boolean): IconName {
 export default function FileTree(): JSX.Element {
   const t = useT()
   const { rootPath, rootName, tree } = useWorkspace()
-  const { activePath, openFile, closeTab, handleMoved } = useTabs()
+  const { activeByPane, openFile, closeTab, handleMoved } = useTabs()
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
   const [menu, setMenu] = useState<ContextMenuState | null>(null)
   const [editing, setEditing] = useState<EditingState | null>(null)
@@ -218,7 +218,7 @@ export default function FileTree(): JSX.Element {
           nodes={tree}
           depth={0}
           expanded={expanded}
-          activeFile={activePath}
+          activeFiles={activeByPane}
           selectedPath={selected?.path ?? null}
           editing={editing}
           dropTarget={dropTarget}
@@ -286,7 +286,8 @@ interface TreeLevelProps {
   nodes: TreeNode[]
   depth: number
   expanded: Set<string>
-  activeFile: string | null
+  /** fichiers affichés (un par colonne en vue double) */
+  activeFiles: (string | null)[]
   selectedPath: string | null
   editing: EditingState | null
   dropTarget: string | null
@@ -308,7 +309,7 @@ function TreeLevel(props: TreeLevelProps): JSX.Element {
     nodes,
     depth,
     expanded,
-    activeFile,
+    activeFiles,
     selectedPath,
     editing,
     dropTarget,
@@ -347,7 +348,7 @@ function TreeLevel(props: TreeLevelProps): JSX.Element {
                 'tree-item',
                 node.type,
                 node.name.endsWith('.md') ? 'md' : '',
-                activeFile === node.path ? 'active' : '',
+                activeFiles.includes(node.path) ? 'active' : '',
                 selectedPath === node.path ? 'selected' : '',
                 node.type === 'dir' && dropTarget === node.path ? 'drop-target' : ''
               ].join(' ')}

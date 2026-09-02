@@ -58,6 +58,11 @@ Stanote est construit avec Electron, React, TypeScript, Milkdown et xterm.js.
 
 Les contributions sont les bienvenues — voir [le guide de contribution](docs/CONTRIBUTING.md) et le [Code de conduite](docs/CODE_OF_CONDUCT.md). Pour les problèmes de sécurité : voir la [politique de sécurité](docs/SECURITY.md).
 
+## Crédits
+
+Le pictogramme « nouvel onglet » est dérivé d’une icône créée par **Jessiey**
+pour [Noun Project](https://thenounproject.com/).
+
 ## Licence
 
 [MIT](LICENSE) © 2026 Stefana Andriason
