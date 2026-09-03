@@ -784,8 +784,16 @@ body {
 .milkdown-host .milkdown {
   --crepe-color-background: transparent;
   min-height: 100%;
-  padding: 16px 40px 60px;
+  padding: 0;
   font-family: var(--font-body);
+}
+
+/* Marges proportionnelles à la largeur du panneau. Le thème Crepe impose
+   « 60px 120px » en dur : confortable en pleine largeur, mais il ne reste
+   presque rien pour le texte en vue double. La marge gauche garde un minimum
+   pour les poignées de bloc (+ et glisser). */
+.milkdown-host .milkdown .ProseMirror {
+  padding: 28px clamp(20px, 5%, 88px) 80px clamp(52px, 6%, 104px);
 }
 
 .milkdown-host .milkdown h1,
