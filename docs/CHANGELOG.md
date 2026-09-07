@@ -4,6 +4,17 @@ All notable changes to Stanote are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## \[1.4.1] — 2026-09-07
+
+### Fixed
+
+* Note margins now follow the width of the pane: side by side, the text no
+  longer gets squeezed into two narrow columns.
+
+* Restarting the terminal now performs a full reset. A full-screen application
+  killed without switching mouse tracking off left the emulator reporting every
+  pointer move ("35;41;3M") — and restarting did not clear it.
+
 ## \[1.4.0] — 2026-09-02
 
 ### Added
