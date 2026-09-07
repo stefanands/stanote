@@ -106,7 +106,12 @@ export function spawnTerminalIfNeeded(id: string): void {
 export function restartTerminal(id: string): void {
   const host = hosts.get(id)
   if (!host) return
-  host.term.clear()
+  /* reset() plutôt que clear() : le suivi de la souris, l'écran alterné et les
+     autres modes sont des états de l'ÉMULATEUR, pas du shell. Une application
+     plein écran tuée sans les désactiver les laisse actifs, et le terminal
+     continue alors d'écrire des rapports (« 35;41;3M ») à chaque mouvement —
+     y compris après relance, puisque clear() n'efface que l'affichage. */
+  host.term.reset()
   host.fit.fit()
   void window.stancode.pty.spawn(id, {
     cwd: useWorkspace.getState().rootPath ?? undefined,
