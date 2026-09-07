@@ -12,7 +12,11 @@ permissions:
 
 jobs:
   release-macos:
-    runs-on: macos-latest
+    # Image épinglée : la mise à jour de macos-latest (os 25.5 → 25.6) casse
+    # l'import du certificat Apple par electron-builder
+    # (« security set-key-partition-list » échoue). À rouvrir quand le
+    # problème sera corrigé en amont.
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
