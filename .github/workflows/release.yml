@@ -12,11 +12,7 @@ permissions:
 
 jobs:
   release-macos:
-    # Image épinglée : la mise à jour de macos-latest (os 25.5 → 25.6) casse
-    # l'import du certificat Apple par electron-builder
-    # (« security set-key-partition-list » échoue). À rouvrir quand le
-    # problème sera corrigé en amont.
-    runs-on: macos-15
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -26,23 +22,61 @@ jobs:
 
       - run: npm ci
 
+      # Le certificat est importé ici, et non par electron-builder : depuis
+      # l'image macOS 25.6, son propre import échoue sur
+      # « security set-key-partition-list ». Sans secret Apple, l'étape passe
+      # son tour et le build sort non signé.
+      - name: Trousseau de signature Apple
+        env:
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${CSC_LINK:-}" ]]; then
+            echo "Pas de certificat : build non signé."
+            exit 0
+          fi
+          KEYCHAIN="$RUNNER_TEMP/stanote-signing.keychain-db"
+          KEYCHAIN_PASSWORD="$(openssl rand -base64 24)"
+          CERT="$RUNNER_TEMP/certificate.p12"
+
+          echo "$CSC_LINK" | base64 --decode > "$CERT"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          # -T : autorise ces outils à utiliser la clé sans invite
+          security import "$CERT" -k "$KEYCHAIN" -P "$CSC_KEY_PASSWORD" \
+            -T /usr/bin/codesign -T /usr/bin/security
+          security set-key-partition-list -S apple-tool:,apple:,codesign: \
+            -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN" > /dev/null
+          # Visible aux recherches, sans masquer les trousseaux existants
+          security list-keychains -d user -s "$KEYCHAIN" $(security list-keychains -d user | tr -d '"')
+          rm -f "$CERT"
+
+          security find-identity -v -p codesigning "$KEYCHAIN"
+          echo "CSC_KEYCHAIN=$KEYCHAIN" >> "$GITHUB_ENV"
+
       - name: Build & publish (macOS)
         run: |
           npx electron-vite build
-          if [[ -z "${CSC_LINK:-}" ]]; then
-            unset CSC_LINK CSC_KEY_PASSWORD APPLE_ID APPLE_APP_SPECIFIC_PASSWORD APPLE_TEAM_ID
+          if [[ -z "${CSC_KEYCHAIN:-}" ]]; then
             export CSC_IDENTITY_AUTO_DISCOVERY=false
           fi
           npx electron-builder --mac --publish always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Apple code signing / notarization — optional.
-          # Without these, the build is produced UNSIGNED (Gatekeeper will warn).
-          CSC_LINK: ${{ secrets.CSC_LINK }}
-          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          # Volontairement PAS de CSC_LINK : l'identité est déjà dans le
+          # trousseau ci-dessus, qu'electron-builder retrouve seul.
+          CSC_KEYCHAIN: ${{ env.CSC_KEYCHAIN }}
+          # Notarisation Apple — optionnelle : sans ces secrets, l'app n'est
+          # pas notarisée (Gatekeeper avertira l'utilisateur).
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+
+      - name: Nettoyage du trousseau
+        if: always()
+        run: security delete-keychain "$RUNNER_TEMP/stanote-signing.keychain-db" || true
 
   release-linux:
     runs-on: ubuntu-latest
