@@ -145,6 +145,9 @@ export default function MilkdownEditor({
     const tr = empty
       ? state.tr.replaceSelectionWith(state.schema.text(label, [mark.create({ href })]), false)
       : state.tr.addMark(from, to, mark.create({ href }))
+    // Sans ça, la marque reste active au curseur et tout ce qui est tapé
+    // ensuite vient s'ajouter au libellé du lien.
+    tr.removeStoredMark(mark)
     view.dispatch(tr.scrollIntoView())
     view.focus()
   }
