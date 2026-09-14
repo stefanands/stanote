@@ -4,6 +4,20 @@ All notable changes to Stanote are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## \[1.5.0] — 2026-09-14
+
+### Added
+
+* Links between notes: press Cmd+K, pick a note from the current folder or its
+  parent, and the link is inserted. Typing a name that does not exist yet
+  creates the note next to the current one.
+
+* Links follow their target. Move or rename a note from the file tree and every
+  link pointing to it is rewritten, as are the links inside the note itself.
+
+* Backlinks at the foot of a note: a collapsed line showing which notes point
+  here, hidden entirely when none do.
+
 ## \[1.4.1] — 2026-09-07
 
 ### Fixed
