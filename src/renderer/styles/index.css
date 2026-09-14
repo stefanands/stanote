@@ -890,6 +890,63 @@ body {
   flex-direction: column;
 }
 
+/* Liens entrants, en pied de note. Aligné sur la marge gauche du texte pour
+   se lire comme une note de bas de page, pas comme une barre d'outils. */
+.backlinks {
+  flex: 0 0 auto;
+  border-top: 1px solid var(--border);
+  padding: 6px clamp(20px, 5%, 88px) 8px clamp(52px, 6%, 104px);
+  font-family: var(--font-body);
+}
+
+.backlinks-toggle {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  background: none;
+  border: 0;
+  padding: 2px 0;
+  font: inherit;
+  font-size: 12px;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+
+.backlinks-toggle:hover {
+  color: var(--text);
+}
+
+.backlinks-chevron {
+  font-size: 10px;
+  line-height: 1;
+}
+
+.backlinks-list {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0 0 0 17px;
+}
+
+.backlinks-item {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background: none;
+  border: 0;
+  padding: 3px 0;
+  font: inherit;
+  font-size: 13px;
+  color: var(--accent);
+  text-align: left;
+  cursor: pointer;
+}
+
+.backlinks-item:hover {
+  text-decoration: underline;
+}
+
 /* Sélecteur de note à lier (Cmd+K) */
 .link-picker {
   position: absolute;

@@ -122,3 +122,39 @@ export function registerLinkHandlers(): void {
     }
   )
 }
+
+/** Notes qui pointent vers `target`. Relit le dossier à chaque appel : sur un
+ *  dossier de notes c'est quelques millisecondes, et ça évite un index à tenir
+ *  à jour au fil des écritures. */
+export function registerBacklinkHandler(): void {
+  ipcMain.handle(
+    'links:backlinks',
+    async (_event, root: string, target: string): Promise<string[]> => {
+      if (!root || !target) return []
+      const notes = await listNotes(root)
+      const found: string[] = []
+      // Copie locale : LINK est global, son lastIndex est un état partagé.
+      const re = new RegExp(LINK.source, 'g')
+
+      for (const note of notes) {
+        if (note === target) continue // les liens d'une note vers elle-même ne comptent pas
+        let content: string
+        try {
+          content = await fsp.readFile(note, 'utf-8')
+        } catch {
+          continue
+        }
+        re.lastIndex = 0
+        let match: RegExpExecArray | null
+        while ((match = re.exec(content))) {
+          if (match[1].startsWith('!')) continue // image, pas un lien de note
+          if (resolveTarget(note, match[2]) === target) {
+            found.push(note)
+            break
+          }
+        }
+      }
+      return found.sort((a, b) => a.localeCompare(b))
+    }
+  )
+}

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import MilkdownEditor from './MilkdownEditor'
 import CodeEditor from './CodeEditor'
+import Backlinks from './Backlinks'
 import DocumentViewer from './DocumentViewer'
 import TabBar, { TAB_DRAG_TYPE } from '../TabBar'
 import Icon from '../Icon'
@@ -94,13 +95,16 @@ export default function EditorPane({ pane = 0 }: Props): JSX.Element {
 
       {active ? (
         kind === 'markdown' ? (
-          <MilkdownEditor
-            key={`${active.path}:${active.version}:${locale}`}
-            path={active.path}
-            initialValue={contents[active.path] ?? ''}
-            locale={locale}
-            onChange={(md) => updateContent(active.path, md)}
-          />
+          <>
+            <MilkdownEditor
+              key={`${active.path}:${active.version}:${locale}`}
+              path={active.path}
+              initialValue={contents[active.path] ?? ''}
+              locale={locale}
+              onChange={(md) => updateContent(active.path, md)}
+            />
+            {!active.untitled && <Backlinks path={active.path} />}
+          </>
         ) : kind === 'code' ? (
           <CodeEditor
             key={`${active.path}:${active.version}:${locale}`}

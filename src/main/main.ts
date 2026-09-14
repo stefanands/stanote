@@ -109,7 +109,7 @@ import { registerFsHandlers, disposeFsForWebContents } from './fs'
 import { registerPtyHandlers, disposePtyForWebContents } from './pty'
 import { registerSearchHandlers, disposeSearchForWebContents } from './search'
 import { registerClaudeHandlers, disposeClaudeForWebContents } from './claude'
-import { registerLinkHandlers } from './links'
+import { registerBacklinkHandler, registerLinkHandlers } from './links'
 import { registerContextMenu } from './contextMenu'
 import { setupMenu } from './menu'
 
@@ -282,6 +282,7 @@ app.whenReady().then(async () => {
   registerSearchHandlers()
   registerClaudeHandlers()
   registerLinkHandlers()
+  registerBacklinkHandler()
   registerRadioHandlers()
   registerPdfHandler()
   setupMenu({ onNewWindow: () => createWindow({ isNew: true }) })

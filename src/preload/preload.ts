@@ -60,6 +60,9 @@ const api = {
    *  de fichiers modifiés. */
   updateLinksAfterMove: (root: string, oldPath: string, newPath: string): Promise<number> =>
     ipcRenderer.invoke('links:updateAfterMove', root, oldPath, newPath),
+  /** Notes qui pointent vers celle-ci (chemins absolus). */
+  backlinks: (root: string, target: string): Promise<string[]> =>
+    ipcRenderer.invoke('links:backlinks', root, target),
   /** URL locale d'aperçu d'un document (null si le serveur n'a pas démarré). */
   docUrl: (path: string): Promise<string | null> => ipcRenderer.invoke('doc:url', path),
   pdf: {
