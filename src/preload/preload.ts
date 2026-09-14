@@ -56,6 +56,10 @@ const api = {
     },
     onState: (cb: (state: RadioState) => void): (() => void) => on<RadioState>('radio:state', cb)
   },
+  /** Recalcule les liens entre notes après un déplacement ; renvoie le nombre
+   *  de fichiers modifiés. */
+  updateLinksAfterMove: (root: string, oldPath: string, newPath: string): Promise<number> =>
+    ipcRenderer.invoke('links:updateAfterMove', root, oldPath, newPath),
   /** URL locale d'aperçu d'un document (null si le serveur n'a pas démarré). */
   docUrl: (path: string): Promise<string | null> => ipcRenderer.invoke('doc:url', path),
   pdf: {

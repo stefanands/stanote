@@ -149,6 +149,8 @@ export default function FileTree(): JSX.Element {
         if (name === edit.targetPath.split('/').pop()) return
         const newPath = await window.stancode.fs.rename(edit.targetPath, name)
         handleMoved(edit.targetPath, newPath)
+        // Les liens des autres notes suivent le fichier renommé.
+        if (rootPath) void window.stancode.updateLinksAfterMove(rootPath, edit.targetPath, newPath)
       } else if (edit.mode === 'create-file') {
         const created = await window.stancode.fs.create(edit.targetPath, ensureExtension(name), 'file')
         void openFile(created)
@@ -167,6 +169,8 @@ export default function FileTree(): JSX.Element {
     try {
       const newPath = await window.stancode.fs.move(src, destDir)
       handleMoved(src, newPath)
+      // Idem au déplacement : liens vers l'élément ET liens qu'il contient.
+      if (rootPath) void window.stancode.updateLinksAfterMove(rootPath, src, newPath)
     } catch (err) {
       console.error(err)
     }

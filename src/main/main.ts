@@ -109,6 +109,7 @@ import { registerFsHandlers, disposeFsForWebContents } from './fs'
 import { registerPtyHandlers, disposePtyForWebContents } from './pty'
 import { registerSearchHandlers, disposeSearchForWebContents } from './search'
 import { registerClaudeHandlers, disposeClaudeForWebContents } from './claude'
+import { registerLinkHandlers } from './links'
 import { registerContextMenu } from './contextMenu'
 import { setupMenu } from './menu'
 
@@ -263,6 +264,11 @@ export function createWindow(opts: WindowOpts = {}): void {
 let ready = false
 const openQueue: string[] = []
 
+/* Dév : STANOTE_DEBUG=1 ouvre le port d'inspection du renderer (CDP), ce qui
+   permet de piloter l'app pour vérifier un comportement. Sans effet sans la
+   variable, donc inoffensif pour l'app publiée. */
+if (process.env['STANOTE_DEBUG']) app.commandLine.appendSwitch('remote-debugging-port', '9222')
+
 app.on('open-file', (event, path) => {
   event.preventDefault()
   if (ready) createWindow({ openTarget: path })
@@ -275,6 +281,7 @@ app.whenReady().then(async () => {
   registerPtyHandlers()
   registerSearchHandlers()
   registerClaudeHandlers()
+  registerLinkHandlers()
   registerRadioHandlers()
   registerPdfHandler()
   setupMenu({ onNewWindow: () => createWindow({ isNew: true }) })

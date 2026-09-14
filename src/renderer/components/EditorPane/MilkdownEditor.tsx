@@ -6,8 +6,11 @@ import { search } from 'prosemirror-search'
 import '@milkdown/crepe/theme/common/style.css'
 import { crepeFeatureConfigs } from './crepeText'
 import { useUi } from '../../stores/ui'
-import type { Locale } from '../../i18n'
+import { useT, type Locale } from '../../i18n'
 import FindBar from './FindBar'
+import LinkPicker from './LinkPicker'
+import { useTabs } from '../../stores/tabs'
+import { resolveLink } from '../../lib/path'
 
 interface Props {
   /** chemin du fichier : sert à mémoriser la position de lecture */
@@ -33,6 +36,11 @@ export default function MilkdownEditor({
   const readyRef = useRef(false)
   const crepeRef = useRef<Crepe | null>(null)
   const findOpen = useUi((s) => s.findOpen)
+  const linkPickerOpen = useUi((s) => s.linkPicker)
+  const t = useT()
+  // Message lu depuis un écouteur natif : gardé en ref pour rester à jour.
+  const missingLinkRef = useRef(t('linkMissing'))
+  missingLinkRef.current = t('linkMissing')
 
   useEffect(() => {
     const crepe = new Crepe({
@@ -85,6 +93,37 @@ export default function MilkdownEditor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  /* Clic sur un lien : une note du dossier s'ouvre dans un onglet, une URL part
+     au navigateur. Sans ça, l'éditeur tenterait de « naviguer » vers un chemin
+     relatif à l'application — page inexistante, interface perdue. */
+  useEffect(() => {
+    const host = rootRef.current
+    if (!host) return
+    const onClick = (e: MouseEvent): void => {
+      const link = (e.target as HTMLElement | null)?.closest?.('a')
+      const href = link?.getAttribute('href')
+      if (!href) return
+      e.preventDefault()
+      e.stopPropagation()
+      if (/^[a-z][a-z0-9+.-]*:/i.test(href)) {
+        if (/^https?:/i.test(href)) window.open(href, '_blank')
+        return
+      }
+      const target = resolveLink(path, href)
+      if (!target) return
+      // Cmd/Ctrl + clic : ouvrir dans l'autre colonne.
+      const tabs = useTabs.getState()
+      if (e.metaKey || e.ctrlKey) tabs.focusPane(tabs.focusedPane === 0 ? 1 : 0)
+      void tabs.openFile(target).then(() => {
+        if (!useTabs.getState().tabs.some((tb) => tb.path === target)) {
+          alert(missingLinkRef.current)
+        }
+      })
+    }
+    host.addEventListener('click', onClick, true)
+    return () => host.removeEventListener('click', onClick, true)
+  }, [path])
+
   const getView = (): EditorView | null => {
     if (!readyRef.current || !crepeRef.current) return null
     try {
@@ -94,9 +133,32 @@ export default function MilkdownEditor({
     }
   }
 
+  /** Insère (ou transforme la sélection en) un lien vers une autre note. */
+  const insertLink = (href: string, label: string): void => {
+    useUi.getState().setLinkPicker(false)
+    const view = getView()
+    if (!view) return
+    const { state } = view
+    const mark = state.schema.marks['link']
+    if (!mark) return
+    const { from, to, empty } = state.selection
+    const tr = empty
+      ? state.tr.replaceSelectionWith(state.schema.text(label, [mark.create({ href })]), false)
+      : state.tr.addMark(from, to, mark.create({ href }))
+    view.dispatch(tr.scrollIntoView())
+    view.focus()
+  }
+
   return (
     <div className="milkdown-wrap">
       {findOpen && <FindBar getView={getView} onClose={() => useUi.getState().setFindOpen(false)} />}
+      {linkPickerOpen && (
+        <LinkPicker
+          notePath={path}
+          onClose={() => useUi.getState().setLinkPicker(false)}
+          onPick={insertLink}
+        />
+      )}
       <div className="milkdown-host" ref={rootRef} />
     </div>
   )

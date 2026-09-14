@@ -225,6 +225,15 @@ export default function App(): JSX.Element {
           e.preventDefault()
           useUi.getState().setFindOpen(!useUi.getState().findOpen)
         }
+      } else if (mod && !e.shiftKey && e.key.toLowerCase() === 'k') {
+        // Lier une note (Cmd+K) : uniquement dans une note markdown.
+        const state = useTabs.getState()
+        const tab = state.tabs.find((t2) => t2.path === activePathOf(state))
+        const kind = tab ? (tab.untitled ? 'markdown' : fileKind(tab.path)) : 'other'
+        if (kind === 'markdown' && !tab?.untitled) {
+          e.preventDefault()
+          useUi.getState().setLinkPicker(!useUi.getState().linkPicker)
+        }
       } else if (mod && !e.shiftKey && e.key.toLowerCase() === 'p') {
         e.preventDefault()
         useUi.getState().setQuickOpen(!useUi.getState().quickOpen)
