@@ -14,8 +14,14 @@ import { dirname, join, relative, sep } from 'path'
 const NOTE = /\.(md|markdown|txt)$/i
 const IGNORED = /(^|[/\\])(\.git|node_modules|\.obsidian)([/\\]|$)/
 
-/** Liens et images markdown : [texte](cible) et [texte](cible "titre"). */
-const LINK = /(!?\[[^\]]*\]\()([^)\s]+)((?:\s+"[^"]*")?\))/g
+/* Liens et images markdown : [texte](cible), [texte](cible "titre") et
+   [texte](<cible avec espaces>) — cette dernière forme est celle que produit
+   l'éditeur dès que le nom de fichier contient une espace. */
+const LINK = /(!?\[[^\]]*\]\(\s*)(<[^<>]*>|[^)\s]+)((?:\s+"[^"]*")?\s*\))/g
+
+/** Retire les chevrons éventuels autour d'une destination. */
+const unwrap = (href: string): string =>
+  href.startsWith('<') && href.endsWith('>') ? href.slice(1, -1) : href
 
 async function listNotes(dir: string, out: string[] = []): Promise<string[]> {
   let entries
@@ -35,16 +41,25 @@ async function listNotes(dir: string, out: string[] = []): Promise<string[]> {
 
 /** Chemin absolu visé par un lien relatif écrit dans `fromFile`. */
 function resolveTarget(fromFile: string, href: string): string | null {
-  if (!href || /^[a-z][a-z0-9+.-]*:/i.test(href) || href.startsWith('#')) return null
-  const clean = decodeURI(href.split('#')[0])
+  const raw = unwrap(href)
+  if (!raw || /^[a-z][a-z0-9+.-]*:/i.test(raw) || raw.startsWith('#')) return null
+  let clean = raw.split('#')[0]
+  try {
+    clean = decodeURI(clean)
+  } catch {
+    // séquence d'échappement invalide : on garde la chaîne telle quelle
+  }
   if (!clean) return null
   return join(dirname(fromFile), clean)
 }
 
-/** Lien relatif à écrire dans `fromFile` pour viser `target`. */
+/** Lien relatif à écrire dans `fromFile` pour viser `target`. Un chemin
+ *  contenant une espace ou une parenthèse est placé entre chevrons, comme le
+ *  fait l'éditeur — plus lisible qu'un encodage en %20. */
 function toHref(fromFile: string, target: string): string {
   const rel = relative(dirname(fromFile), target).split(sep).join('/')
-  return encodeURI(rel.startsWith('..') ? rel : `./${rel}`)
+  const path = rel.startsWith('..') ? rel : `./${rel}`
+  return /[\s()<>]/.test(path) ? `<${path}>` : path
 }
 
 /** Nouveau chemin d'une cible, si elle faisait partie de l'élément déplacé. */

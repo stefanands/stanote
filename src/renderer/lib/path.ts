@@ -65,8 +65,15 @@ export function relativeLink(fromFile: string, toFile: string): string {
 /** Résout un lien relatif écrit dans une note en chemin absolu.
  *  Renvoie null pour une URL (http, mailto…) ou une ancre interne. */
 export function resolveLink(fromFile: string, href: string): string | null {
-  if (!href || /^[a-z][a-z0-9+.-]*:/i.test(href) || href.startsWith('#')) return null
-  const decoded = decodeURI(href.split('#')[0])
+  // Les destinations contenant une espace s'écrivent entre chevrons en markdown.
+  const raw = href.startsWith('<') && href.endsWith('>') ? href.slice(1, -1) : href
+  if (!raw || /^[a-z][a-z0-9+.-]*:/i.test(raw) || raw.startsWith('#')) return null
+  let decoded = raw.split('#')[0]
+  try {
+    decoded = decodeURI(decoded)
+  } catch {
+    // séquence d'échappement invalide : on garde la chaîne telle quelle
+  }
   if (!decoded) return null
   const sep = sepOf(fromFile)
   // Chemin déjà absolu (unix ou windows)
