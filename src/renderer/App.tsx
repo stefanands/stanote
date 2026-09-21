@@ -99,6 +99,7 @@ export default function App(): JSX.Element {
   const layout = useUi((s) => s.layout)
   const theme = useTheme((s) => s.theme)
   const fontIndex = useFont((s) => s.index)
+  const rootName = useWorkspace((s) => s.rootName)
   const [layoutMenu, setLayoutMenu] = useState(false)
   const [copied, setCopied] = useState(false)
   /** vue double active dès qu'un onglet a été glissé dans la colonne de droite */
@@ -127,6 +128,14 @@ export default function App(): JSX.Element {
   useEffect(() => {
     applyFont(fontIndex)
   }, [fontIndex])
+
+  /* Titre de la fenêtre = nom du dossier ouvert. Il n'apparaît nulle part dans
+     l'interface (barre de titre masquée), mais c'est lui que macOS affiche sous
+     chaque vignette dans Mission Control et le sélecteur de fenêtres : sept
+     fenêtres toutes légendées « Stanote » ne se distinguent pas. */
+  useEffect(() => {
+    document.title = rootName ?? 'Stanote'
+  }, [rootName])
 
   // Glisser un dossier (ou un fichier) depuis le Finder sur la fenêtre.
   useEffect(() => {
