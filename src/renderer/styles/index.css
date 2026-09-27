@@ -814,6 +814,51 @@ body {
   height: 18px;
 }
 
+/* Menu du « + » (et de « / ») : la version d'origine tient sur près de 500 px
+   de haut, soit plus que la fenêtre sur un portable. Lignes resserrées,
+   icônes et intitulés réduits, hauteur plafonnée. */
+.milkdown .milkdown-slash-menu .tab-group {
+  padding: 8px 8px 0;
+}
+
+.milkdown .milkdown-slash-menu .tab-group ul {
+  padding: 4px 6px;
+  gap: 6px;
+}
+
+.milkdown .milkdown-slash-menu .tab-group ul li {
+  padding: 4px 8px;
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.milkdown .milkdown-slash-menu .menu-groups {
+  padding: 0 8px 8px;
+  max-height: 300px;
+}
+
+.milkdown .milkdown-slash-menu .menu-groups .menu-group h6 {
+  font-size: 11px;
+  line-height: 14px;
+  padding: 8px 8px 2px;
+}
+
+.milkdown .milkdown-slash-menu .menu-groups .menu-group li {
+  min-width: 190px;
+  gap: 10px;
+  padding: 5px 8px;
+}
+
+.milkdown .milkdown-slash-menu .menu-groups .menu-group li svg {
+  width: 18px;
+  height: 18px;
+}
+
+.milkdown .milkdown-slash-menu .menu-groups .menu-group li > span {
+  font-size: 13px;
+  line-height: 18px;
+}
+
 .milkdown-host .milkdown h1,
 .milkdown-host .milkdown h2,
 .milkdown-host .milkdown h3,
