@@ -4,6 +4,24 @@ All notable changes to Stanote are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## \[1.5.1] — 2026-09-27
+
+### Changed
+
+* The window title now carries the name of the open folder. It is invisible
+  inside the app, but macOS uses it to label each window in Mission Control —
+  where several windows all captioned "Stanote" could not be told apart.
+
+* The slash menu (the one behind the "+" button) is more compact: shorter rows,
+  smaller icons, and regular rather than bold entries. It went from roughly
+  470px tall to 343px, so it fits on a laptop screen.
+
+### Fixed
+
+* The block handle stays within view in a narrow pane. Since margins started
+  following the pane width, the "+" button sat outside the visible area; the
+  handle is now slimmer and closer to the text.
+
 ## \[1.5.0] — 2026-09-14
 
 ### Added

@@ -857,6 +857,7 @@ body {
 .milkdown .milkdown-slash-menu .menu-groups .menu-group li > span {
   font-size: 13px;
   line-height: 18px;
+  font-weight: 400;
 }
 
 .milkdown-host .milkdown h1,
