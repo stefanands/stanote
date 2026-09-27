@@ -13,6 +13,10 @@ export function crepeFeatureConfigs(locale: Locale): NonNullable<
       text: fr ? 'Écrivez, ou tapez « / » pour les commandes…' : 'Write, or type "/" for commands…'
     },
     [Crepe.Feature.BlockEdit]: {
+      // La poignée de bloc se pose dans la marge gauche de la note. Depuis que
+      // les marges suivent la largeur du panneau, les 16 px de décalage par
+      // défaut poussaient le « + » hors de la zone visible.
+      blockHandle: { getOffset: () => 6 },
       textGroup: {
         label: fr ? 'Texte' : 'Text',
         text: { label: fr ? 'Texte' : 'Text' },
