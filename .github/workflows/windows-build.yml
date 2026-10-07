@@ -32,6 +32,9 @@ jobs:
         run: npx tsc --noEmit
 
       - name: Build & package (Windows, non signé)
+        # bash et non PowerShell : ce dernier couperait l'argument
+        # -c.extraMetadata.version=… en deux.
+        shell: bash
         run: |
           npx electron-vite build
           npx electron-builder --win --publish never -c.extraMetadata.version=${{ env.BETA_VERSION }}
