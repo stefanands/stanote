@@ -79,7 +79,7 @@ export default function TerminalPane(): JSX.Element {
     saveMode(next)
     setModeState(next)
   }
-  const assistantBusy = useAssistant((s) => s.busy)
+  const assistantBusy = useAssistant((s) => (s.activeId ? s.threads[s.activeId]?.busy : false) ?? false)
   const provider = useActiveProvider()
   // Un fournisseur désinstallé ne prête plus son nom ni sa couleur au panneau.
   const active = provider && isInstalled(provider) ? provider : null

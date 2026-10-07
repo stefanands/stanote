@@ -1,11 +1,12 @@
-import type { AssistantEvent, AssistantKind, ProviderStatus } from '../../shared/types'
+import type { AssistantEvent, AssistantKind, ProviderStatus, Tier } from '../../shared/types'
 
 export type Emit = (event: AssistantEvent) => void
 
 /** Une conversation avec un fournisseur, propre à une fenêtre. */
 export interface AssistantSession {
-  /** Envoie un message ; la réponse arrive par `emit`, close par 'done' ou 'error'. */
-  send(prompt: string, cwd: string, emit: Emit): void
+  /** Envoie un message ; la réponse arrive par `emit`, close par 'done' ou 'error'.
+   *  `tier` est toujours l'une des gammes déclarées par le fournisseur. */
+  send(prompt: string, cwd: string, tier: Tier, emit: Emit): void
   /** Interrompt la réponse en cours ; la conversation est conservée. */
   cancel(): void
   /** Oublie la conversation : le prochain message en ouvre une nouvelle. */
@@ -22,6 +23,8 @@ export interface Provider {
   kind: AssistantKind
   /** commande de connexion au terminal, s'il y en a une */
   loginCommand?: string
+  /** gammes proposées et ce qu'elles désignent ; 'standard' est obligatoire */
+  tiers: Partial<Record<Tier, string>> & { standard: string }
   /** Installé ? connecté ? Revérifié à chaque appel. */
   status(): Promise<ProviderStatus>
   createSession(): AssistantSession

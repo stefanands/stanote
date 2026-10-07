@@ -5,6 +5,7 @@ import type {
   ProviderStatus,
   RadioState,
   SearchMatch,
+  Tier,
   TreeNode,
   WorkspaceInfo
 } from '../shared/types'
@@ -44,8 +45,8 @@ const api = {
   assistant: {
     providers: (): Promise<ProviderInfo[]> => ipcRenderer.invoke('assistant:providers'),
     status: (id: string): Promise<ProviderStatus> => ipcRenderer.invoke('assistant:status', id),
-    send: (id: string, prompt: string, cwd: string): Promise<void> =>
-      ipcRenderer.invoke('assistant:send', id, prompt, cwd),
+    send: (id: string, prompt: string, cwd: string, tier: Tier): Promise<void> =>
+      ipcRenderer.invoke('assistant:send', id, prompt, cwd, tier),
     cancel: (id: string): Promise<void> => ipcRenderer.invoke('assistant:cancel', id),
     reset: (id: string): Promise<void> => ipcRenderer.invoke('assistant:reset', id),
     onEvent: (cb: (msg: { providerId: string; event: AssistantEvent }) => void): (() => void) =>

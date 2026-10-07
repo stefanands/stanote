@@ -35,6 +35,11 @@ export type IconName =
   | 'next'
   | 'disc'
   | 'radio'
+  | 'key'
+  | 'robot'
+  | 'brain'
+  | 'wind'
+  | 'hexagon'
 
 const paths: Record<IconName, JSX.Element> = {
   chevron: <polyline points="6 3.5 10.5 8 6 12.5" />,
@@ -131,6 +136,47 @@ const paths: Record<IconName, JSX.Element> = {
     </>
   ),
   stop: <rect x="4.5" y="4.5" width="7" height="7" rx="1" />,
+  /* Gammes de modèle : tâche simple, tâche complexe, raisonnement */
+  key: (
+    <>
+      <circle cx="5" cy="11" r="2.6" />
+      <path d="M6.9 9.1 13 3" />
+      <path d="m11 5 1.6 1.6M9.4 6.6l1.3 1.3" />
+    </>
+  ),
+  robot: (
+    <>
+      <rect x="2.8" y="5.5" width="10.4" height="7.5" rx="2" />
+      <path d="M8 5.5V3" />
+      <circle cx="8" cy="2.3" r="0.7" />
+      <circle cx="6" cy="9" r="0.6" fill="currentColor" />
+      <circle cx="10" cy="9" r="0.6" fill="currentColor" />
+      <path d="M6.6 11.2h2.8" />
+    </>
+  ),
+  brain: (
+    <>
+      <path d="M8 3.6C6.6 2.4 4.2 3 4.1 5 2.6 5.5 2.2 7.5 3.2 8.5c-.9 1.6.2 3.6 2 3.5.6 1.1 2 1.5 2.8.6" />
+      <path d="M8 3.6c1.4-1.2 3.8-.6 3.9 1.4 1.5.5 1.9 2.5.9 3.5.9 1.6-.2 3.6-2 3.5-.6 1.1-2 1.5-2.8.6" />
+      <path d="M8 3.6v9" />
+    </>
+  ),
+  /* Mistral : le vent du même nom, plutôt que le logo de la marque. */
+  wind: (
+    <>
+      <path d="M2 6h8.2a2 2 0 1 0-2-2" />
+      <path d="M2 9h10.5a2 2 0 1 1-2 2" />
+      <path d="M2 12h4.5" />
+    </>
+  ),
+  /* Codex : hexagone et invite de commande, sans reprendre de logo. */
+  hexagon: (
+    <>
+      <path d="M8 1.8 13.4 4.9v6.2L8 14.2 2.6 11.1V4.9Z" />
+      <polyline points="5.9 6.6 7.6 8 5.9 9.4" />
+      <path d="M8.6 9.6h1.8" />
+    </>
+  ),
   cassette: (
     <>
       <rect x="2" y="4" width="12" height="8" rx="1.5" />

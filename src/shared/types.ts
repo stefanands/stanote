@@ -36,6 +36,10 @@ export type AssistantKind = 'agent' | 'chat'
  *  s'il est connecté (on le laisse essayer). */
 export type ProviderStatus = 'ready' | 'needs-login' | 'missing' | 'unknown'
 
+/** Gamme de modèle choisie par l'utilisateur, traduite par chaque fournisseur
+ *  en modèle et/ou niveau d'effort : tâche simple, tâche complexe, raisonnement. */
+export type Tier = 'fast' | 'standard' | 'reasoning'
+
 export interface ProviderInfo {
   id: string
   name: string
@@ -43,6 +47,8 @@ export interface ProviderInfo {
   status: ProviderStatus
   /** commande à lancer au terminal pour se connecter, s'il y en a une */
   loginCommand?: string
+  /** gammes proposées, avec ce qu'elles désignent (affiché en infobulle) */
+  tiers: Partial<Record<Tier, string>>
 }
 
 /** État partagé de la radio (source de vérité dans le processus principal).

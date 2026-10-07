@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { ProviderInfo } from '../../shared/types'
+import type { ProviderInfo, Tier } from '../../shared/types'
 import { useWorkspace } from './workspace'
 
 export interface AssistantMessage {
@@ -10,34 +10,55 @@ export interface AssistantMessage {
   detail?: string
 }
 
-/* Le choix du fournisseur est une préférence de l'utilisateur sur cette
-   machine : localStorage suffit. Lecture et écriture protégées, le stockage
-   pouvant être indisponible. */
-const CHOICE_KEY = 'stanote:assistant'
+/** Conversation avec un fournisseur. Chacun garde la sienne : passer de Claude
+ *  à Mistral puis revenir retrouve le fil de Claude là où on l'avait laissé. */
+export interface Thread {
+  messages: AssistantMessage[]
+  busy: boolean
+  /** outil en cours d'utilisation (Edit, Bash…), pour la ligne d'état */
+  currentTool: string | null
+}
 
-function readChoice(): string | null {
+const EMPTY_THREAD: Thread = { messages: [], busy: false, currentTool: null }
+
+/* Préférences de l'utilisateur sur cette machine (fournisseur, gamme) :
+   localStorage suffit. Lecture et écriture protégées, le stockage pouvant être
+   indisponible. */
+const CHOICE_KEY = 'stanote:assistant'
+const TIER_KEY = 'stanote:tier'
+
+function readPref(key: string): string | null {
   try {
-    return localStorage.getItem(CHOICE_KEY)
+    return localStorage.getItem(key)
   } catch {
     return null
   }
 }
 
-function saveChoice(id: string): void {
+function savePref(key: string, value: string): void {
   try {
-    localStorage.setItem(CHOICE_KEY, id)
+    localStorage.setItem(key, value)
   } catch {
     // préférence perdue au prochain lancement, sans conséquence
   }
 }
 
+const TIERS: Tier[] = ['fast', 'standard', 'reasoning']
+const storedTier = readPref(TIER_KEY)
+const initialTier: Tier = TIERS.includes(storedTier as Tier) ? (storedTier as Tier) : 'standard'
+
 export const isInstalled = (p: ProviderInfo): boolean => p.status !== 'missing'
+
+/** Gamme réellement utilisée : celle choisie si le fournisseur la propose,
+ *  sinon la standard (que tous proposent). */
+export const effectiveTier = (p: ProviderInfo | null, tier: Tier): Tier =>
+  p && p.tiers[tier] ? tier : 'standard'
 
 /** Fournisseur à brancher d'office : le dernier choisi s'il est toujours
  *  installé, sinon le seul installé. Plusieurs installés et aucun choix
  *  mémorisé : null, l'utilisateur choisit. */
 function pickActive(list: ProviderInfo[]): string | null {
-  const remembered = readChoice()
+  const remembered = readPref(CHOICE_KEY)
   if (remembered && list.some((p) => p.id === remembered && isInstalled(p))) return remembered
   const installed = list.filter(isInstalled)
   return installed.length === 1 ? installed[0].id : null
@@ -50,26 +71,29 @@ interface AssistantState {
   activeId: string | null
   /** écran de choix rouvert à la demande, alors qu'un fournisseur est branché */
   picking: boolean
-  messages: AssistantMessage[]
-  busy: boolean
-  /** outil en cours d'utilisation (Edit, Bash…), pour la ligne d'état */
-  currentTool: string | null
+  /** une conversation par fournisseur */
+  threads: Record<string, Thread>
+  /** gamme choisie : tâche simple, complexe, ou raisonnement */
+  tier: Tier
   /** (re)détecte les fournisseurs : installés ? connectés ? */
   refresh: () => Promise<void>
   choose: (id: string) => void
   setPicking: (picking: boolean) => void
+  setTier: (tier: Tier) => void
   send: (prompt: string) => void
   cancel: () => void
+  /** nouvelle conversation avec le fournisseur branché */
   reset: () => void
+  /** oublie toutes les conversations (changement de dossier) */
+  resetAll: () => void
 }
 
 export const useAssistant = create<AssistantState>((set, get) => ({
   providers: null,
   activeId: null,
   picking: false,
-  messages: [],
-  busy: false,
-  currentTool: null,
+  threads: {},
+  tier: initialTier,
 
   refresh: async () => {
     const providers = await window.stancode.assistant.providers()
@@ -80,29 +104,30 @@ export const useAssistant = create<AssistantState>((set, get) => ({
     set({ providers, activeId: keep ? current : pickActive(providers) })
   },
 
+  // Changer de fournisseur ne touche à aucune conversation : chacun garde la sienne.
   choose: (id) => {
-    saveChoice(id)
-    const { activeId } = get()
-    if (id !== activeId) {
-      // Nouveau fournisseur, nouvelle conversation.
-      if (activeId) void window.stancode.assistant.reset(activeId)
-      set({ messages: [], busy: false, currentTool: null })
-    }
+    savePref(CHOICE_KEY, id)
     set({ activeId: id, picking: false })
   },
 
   setPicking: (picking) => set({ picking }),
 
+  setTier: (tier) => {
+    savePref(TIER_KEY, tier)
+    set({ tier })
+  },
+
   send: (prompt) => {
-    const { activeId, busy } = get()
+    const { activeId, providers, tier } = get()
     const cwd = useWorkspace.getState().rootPath
-    if (!activeId || !cwd || busy || !prompt.trim()) return
-    set((s) => ({
-      messages: [...s.messages, { role: 'user', text: prompt }],
+    const provider = providers?.find((p) => p.id === activeId) ?? null
+    if (!activeId || !provider || !cwd || threadOf(activeId).busy || !prompt.trim()) return
+    updateThread(activeId, (t) => ({
+      messages: [...t.messages, { role: 'user', text: prompt }],
       busy: true,
       currentTool: null
     }))
-    void window.stancode.assistant.send(activeId, prompt, cwd)
+    void window.stancode.assistant.send(activeId, prompt, cwd, effectiveTier(provider, tier))
   },
 
   cancel: () => {
@@ -112,14 +137,34 @@ export const useAssistant = create<AssistantState>((set, get) => ({
 
   reset: () => {
     const { activeId } = get()
-    if (activeId) void window.stancode.assistant.reset(activeId)
-    set({ messages: [], busy: false, currentTool: null })
+    if (!activeId) return
+    void window.stancode.assistant.reset(activeId)
+    updateThread(activeId, () => EMPTY_THREAD)
+  },
+
+  resetAll: () => {
+    for (const id of Object.keys(get().threads)) void window.stancode.assistant.reset(id)
+    set({ threads: {} })
   }
 }))
+
+function threadOf(id: string): Thread {
+  return useAssistant.getState().threads[id] ?? EMPTY_THREAD
+}
+
+function updateThread(id: string, fn: (t: Thread) => Partial<Thread>): void {
+  const current = threadOf(id)
+  useAssistant.setState((s) => ({ threads: { ...s.threads, [id]: { ...current, ...fn(current) } } }))
+}
 
 /** Fournisseur branché, avec son état. */
 export function useActiveProvider(): ProviderInfo | null {
   return useAssistant((s) => s.providers?.find((p) => p.id === s.activeId) ?? null)
+}
+
+/** Conversation du fournisseur branché. */
+export function useActiveThread(): Thread {
+  return useAssistant((s) => (s.activeId && s.threads[s.activeId]) || EMPTY_THREAD)
 }
 
 /** Met à jour l'état d'un fournisseur après un échec révélateur. */
@@ -131,54 +176,53 @@ function markStatus(id: string, status: ProviderInfo['status']): void {
   })
 }
 
-/* Changer de dossier change le répertoire de travail de l'assistant :
-   poursuivre la conversation précédente le laisserait raisonner sur l'ancien
-   dossier. On repart donc d'un fil vierge. */
+/* Changer de dossier change le répertoire de travail des assistants :
+   poursuivre les conversations précédentes les laisserait raisonner sur
+   l'ancien dossier. On repart donc de fils vierges. */
 let lastRoot = useWorkspace.getState().rootPath
 useWorkspace.subscribe((s) => {
   if (s.rootPath === lastRoot) return
   lastRoot = s.rootPath
-  if (useAssistant.getState().messages.length > 0) useAssistant.getState().reset()
+  if (Object.keys(useAssistant.getState().threads).length > 0) useAssistant.getState().resetAll()
 })
 
-/* Flux d'événements du main : le texte arrive en deltas, on l'agrège dans le
- * dernier message assistant (créé au premier delta du tour). Les événements
- * d'un fournisseur qui n'est plus branché sont ignorés. */
+/* Flux d'événements du main, rangés dans la conversation du fournisseur qui
+ * les émet — même s'il n'est plus affiché. Le texte arrive par morceaux, agrégés
+ * dans le dernier message assistant (créé au premier morceau du tour). */
 window.stancode.assistant.onEvent(({ providerId, event }) => {
-  const { messages, activeId } = useAssistant.getState()
-  if (providerId !== activeId) return
   if (event.type === 'delta') {
-    const last = messages[messages.length - 1]
-    if (last && last.role === 'assistant') {
-      const next = [...messages]
-      next[next.length - 1] = { ...last, text: last.text + event.text }
-      useAssistant.setState({ messages: next, currentTool: null })
-    } else {
-      useAssistant.setState({
-        messages: [...messages, { role: 'assistant', text: event.text }],
+    updateThread(providerId, (t) => {
+      const last = t.messages[t.messages.length - 1]
+      if (last && last.role === 'assistant') {
+        const messages = [...t.messages]
+        messages[messages.length - 1] = { ...last, text: last.text + event.text }
+        return { messages, currentTool: null }
+      }
+      return {
+        messages: [...t.messages, { role: 'assistant', text: event.text }],
         currentTool: null
-      })
-    }
+      }
+    })
   } else if (event.type === 'tool') {
-    useAssistant.setState({
+    updateThread(providerId, (t) => ({
       currentTool: event.name,
       messages: [
-        ...messages,
+        ...t.messages,
         { role: 'tool', text: event.name, ...(event.detail ? { detail: event.detail } : {}) }
       ]
-    })
+    }))
   } else if (event.type === 'done') {
-    useAssistant.setState({ busy: false, currentTool: null })
+    updateThread(providerId, () => ({ busy: false, currentTool: null }))
   } else if (event.type === 'error') {
-    useAssistant.setState({ busy: false, currentTool: null })
+    updateThread(providerId, () => ({ busy: false, currentTool: null }))
     if (event.message === 'not-found') {
       markStatus(providerId, 'missing')
     } else if (event.message === 'not-authenticated' || event.message === 'no-response') {
       markStatus(providerId, 'needs-login')
     } else if (event.message !== 'cancelled') {
-      useAssistant.setState({
-        messages: [...useAssistant.getState().messages, { role: 'assistant', text: `⚠︎ ${event.message}` }]
-      })
+      updateThread(providerId, (t) => ({
+        messages: [...t.messages, { role: 'assistant', text: `⚠︎ ${event.message}` }]
+      }))
     }
   }
 })

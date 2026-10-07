@@ -1,16 +1,18 @@
 import { useEffect, useRef, useState } from 'react'
 import { marked } from 'marked'
-import type { ProviderInfo } from '../../../shared/types'
+import type { ProviderInfo, Tier } from '../../../shared/types'
 import {
+  effectiveTier,
   isInstalled,
   useActiveProvider,
+  useActiveThread,
   useAssistant,
   type AssistantMessage
 } from '../../stores/assistant'
 import { useWorkspace } from '../../stores/workspace'
 import { useI18n, useT } from '../../i18n'
 import { lookOf } from '../../lib/providers'
-import Icon from '../Icon'
+import Icon, { type IconName } from '../Icon'
 
 /** Fil regroupé : les traces d'outils consécutives forment un bloc repliable. */
 type Block = { kind: 'msg'; msg: AssistantMessage } | { kind: 'tools'; items: AssistantMessage[] }
@@ -48,6 +50,35 @@ const TOOL_FR: Record<string, string> = {
 
 function toolLabel(name: string, locale: 'fr' | 'en'): string {
   return locale === 'fr' ? (TOOL_FR[name] ?? name) : name
+}
+
+const TIER_UI: { tier: Tier; icon: IconName; label: 'tierFast' | 'tierStandard' | 'tierReasoning' }[] =
+  [
+    { tier: 'fast', icon: 'key', label: 'tierFast' },
+    { tier: 'standard', icon: 'robot', label: 'tierStandard' },
+    { tier: 'reasoning', icon: 'brain', label: 'tierReasoning' }
+  ]
+
+/** Choix de la gamme : seules celles que propose le fournisseur apparaissent,
+ *  l'infobulle nomme le modèle ou l'effort correspondant. */
+function TierPicker({ provider }: { provider: ProviderInfo }): JSX.Element {
+  const t = useT()
+  const tier = useAssistant((s) => s.tier)
+  const current = effectiveTier(provider, tier)
+  return (
+    <div className="assistant-tiers">
+      {TIER_UI.filter((u) => provider.tiers[u.tier]).map((u) => (
+        <button
+          key={u.tier}
+          className={u.tier === current ? 'assistant-tier active' : 'assistant-tier'}
+          title={`${t(u.label)} — ${provider.tiers[u.tier]}`}
+          onClick={() => useAssistant.getState().setTier(u.tier)}
+        >
+          <Icon name={u.icon} size={14} />
+        </button>
+      ))}
+    </div>
+  )
 }
 
 /** Écran de choix : fournisseurs connus, leur état, et l'action utile pour
@@ -106,7 +137,8 @@ function ProviderPicker({ providers }: { providers: ProviderInfo[] }): JSX.Eleme
 export default function AssistantPane(): JSX.Element {
   const t = useT()
   const locale = useI18n((s) => s.locale)
-  const { providers, picking, messages, busy, currentTool, send, cancel } = useAssistant()
+  const { providers, picking, send, cancel } = useAssistant()
+  const { messages, busy, currentTool } = useActiveThread()
   const active = useActiveProvider()
   const rootName = useWorkspace((s) => s.rootName)
   const rootPath = useWorkspace((s) => s.rootPath)
@@ -262,6 +294,7 @@ export default function AssistantPane(): JSX.Element {
           </div>
         )}
       </div>
+      <TierPicker provider={active} />
       <div className="assistant-input-row">
         <textarea
           ref={inputRef}

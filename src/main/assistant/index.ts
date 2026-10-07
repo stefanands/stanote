@@ -1,12 +1,14 @@
 import { ipcMain, webContents as allWebContents } from 'electron'
-import type { AssistantEvent, ProviderInfo, ProviderStatus } from '../../shared/types'
+import type { AssistantEvent, ProviderInfo, ProviderStatus, Tier } from '../../shared/types'
 import type { AssistantSession, Provider } from './types'
 import { claudeProvider } from './claude'
+import { codexProvider } from './codex'
+import { mistralProvider } from './mistral'
 
 /* Registre des fournisseurs d'assistant. L'interface ne parle qu'à ces canaux
    « assistant:* », en désignant le fournisseur par son id : en ajouter un se
    limite à l'inscrire dans PROVIDERS. */
-const PROVIDERS: Provider[] = [claudeProvider]
+const PROVIDERS: Provider[] = [claudeProvider, mistralProvider, codexProvider]
 
 const byId = (id: string): Provider | undefined => PROVIDERS.find((p) => p.id === id)
 
@@ -41,6 +43,7 @@ export function registerAssistantHandlers(): void {
         name: p.name,
         kind: p.kind,
         status: await p.status(),
+        tiers: p.tiers,
         ...(p.loginCommand ? { loginCommand: p.loginCommand } : {})
       }))
     )
@@ -51,15 +54,22 @@ export function registerAssistantHandlers(): void {
     return provider ? provider.status() : 'missing'
   })
 
-  ipcMain.handle('assistant:send', (event, id: string, prompt: string, cwd: string) => {
-    const windowId = event.sender.id
-    const provider = byId(id)
-    if (!provider) {
-      emitTo(windowId, id, { type: 'error', message: 'not-found' })
-      return
+  ipcMain.handle(
+    'assistant:send',
+    (event, id: string, prompt: string, cwd: string, tier: Tier) => {
+      const windowId = event.sender.id
+      const provider = byId(id)
+      if (!provider) {
+        emitTo(windowId, id, { type: 'error', message: 'not-found' })
+        return
+      }
+      // Gamme non proposée par ce fournisseur : on retombe sur la standard.
+      const effective = provider.tiers[tier] ? tier : 'standard'
+      sessionFor(windowId, provider).send(prompt, cwd, effective, (ev) =>
+        emitTo(windowId, id, ev)
+      )
     }
-    sessionFor(windowId, provider).send(prompt, cwd, (ev) => emitTo(windowId, id, ev))
-  })
+  )
 
   ipcMain.handle('assistant:cancel', (event, id: string) => {
     sessions.get(event.sender.id)?.get(id)?.cancel()

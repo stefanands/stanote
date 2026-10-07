@@ -14,6 +14,16 @@ const LOOKS: Record<string, ProviderLook> = {
     icon: 'sparkle',
     color: 'var(--claude)',
     installUrl: 'https://code.claude.com/docs/en/setup'
+  },
+  codex: {
+    icon: 'hexagon',
+    color: 'var(--text)',
+    installUrl: 'https://developers.openai.com/codex/cli'
+  },
+  mistral: {
+    icon: 'wind',
+    color: 'var(--mistral)',
+    installUrl: 'https://docs.mistral.ai/mistral-vibe/introduction'
   }
 }
 
