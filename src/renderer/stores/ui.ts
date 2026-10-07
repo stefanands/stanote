@@ -13,10 +13,13 @@ interface UiState {
   quickOpen: boolean
   /** barre chercher/remplacer dans la note (Cmd+F) */
   findOpen: boolean
+  /** sélecteur de note à lier (Cmd+K) */
+  linkPicker: boolean
   layout: Layout
   setSidebarView: (view: 'files' | 'search') => void
   setQuickOpen: (open: boolean) => void
   setFindOpen: (open: boolean) => void
+  setLinkPicker: (open: boolean) => void
   setLayout: (layout: Layout) => void
 }
 
@@ -24,10 +27,12 @@ export const useUi = create<UiState>((set) => ({
   sidebarView: 'files',
   quickOpen: false,
   findOpen: false,
+  linkPicker: false,
   layout: detectLayout(),
   setSidebarView: (sidebarView) => set({ sidebarView }),
   setQuickOpen: (quickOpen) => set({ quickOpen }),
   setFindOpen: (findOpen) => set({ findOpen }),
+  setLinkPicker: (linkPicker) => set({ linkPicker }),
   setLayout: (layout) => {
     localStorage.setItem('stanote:layout', layout)
     set({ layout })

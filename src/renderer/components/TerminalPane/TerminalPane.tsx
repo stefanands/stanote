@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { useWorkspace } from '../../stores/workspace'
 import { useTheme } from '../../stores/theme'
-import { useClaude } from '../../stores/claude'
+import { isInstalled, useActiveProvider, useAssistant } from '../../stores/assistant'
 import { useT } from '../../i18n'
+import { lookOf } from '../../lib/providers'
 import Icon from '../Icon'
-import ClaudePane from './ClaudePane'
+import AssistantPane from './AssistantPane'
 import {
   getTerminalHost,
   detachTerminalHost,
@@ -16,7 +17,7 @@ import {
 } from './terminalHost'
 
 /* L'hôte xterm survit au démontage (instances hors React) : changer d'onglet,
-   passer en mode Claude ou changer de disposition ne perd ni le shell ni son
+   passer en mode assistant ou changer de disposition ne perd ni le shell ni son
    historique. */
 function TerminalHostSlot({ id }: { id: string }): JSX.Element {
   const t = useT()
@@ -47,16 +48,58 @@ function TerminalHostSlot({ id }: { id: string }): JSX.Element {
 let counter = 0
 const newTerminalId = (): string => `term-${++counter}`
 
+type PanelMode = 'terminal' | 'assistant'
+
+/* Le panneau s'ouvre sur l'assistant : le terminal seul intimide qui n'en a
+   pas l'habitude. Le dernier mode choisi est retenu, si bien qu'un habitué du
+   terminal le retrouve à chaque lancement. */
+const MODE_KEY = 'stanote:panelMode'
+
+function readMode(): PanelMode {
+  try {
+    return localStorage.getItem(MODE_KEY) === 'terminal' ? 'terminal' : 'assistant'
+  } catch {
+    return 'assistant'
+  }
+}
+
+function saveMode(mode: PanelMode): void {
+  try {
+    localStorage.setItem(MODE_KEY, mode)
+  } catch {
+    // préférence perdue au prochain lancement, sans conséquence
+  }
+}
+
 export default function TerminalPane(): JSX.Element {
   const t = useT()
   const theme = useTheme((s) => s.theme)
-  const [mode, setMode] = useState<'terminal' | 'claude'>('terminal')
-  const claudeBusy = useClaude((s) => s.busy)
+  const [mode, setModeState] = useState<PanelMode>(readMode)
+  const setMode = (next: PanelMode): void => {
+    saveMode(next)
+    setModeState(next)
+  }
+  const assistantBusy = useAssistant((s) => (s.activeId ? s.threads[s.activeId]?.busy : false) ?? false)
+  const provider = useActiveProvider()
+  // Un fournisseur désinstallé ne prête plus son nom ni sa couleur au panneau.
+  const active = provider && isInstalled(provider) ? provider : null
+  const look = lookOf(active?.id)
+  /** plusieurs fournisseurs installés : le titre permet d'en changer */
+  const canSwitch = useAssistant((s) => (s.providers ?? []).filter(isInstalled).length > 1)
   /** onglets de terminal ; le premier est créé au montage */
   const [terminals, setTerminals] = useState<string[]>(() => [newTerminalId()])
   const [activeId, setActiveId] = useState<string>(() => terminals[0])
 
   useEffect(() => setTerminalTheme(theme), [theme])
+
+  // En mode terminal, le panneau assistant n'est pas monté : on détecte quand
+  // même le fournisseur, pour que le bouton porte d'emblée la bonne icône.
+  useEffect(() => {
+    if (mode === 'terminal' && useAssistant.getState().providers === null) {
+      void useAssistant.getState().refresh()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const addTerminal = (): void => {
     const id = newTerminalId()
@@ -84,7 +127,10 @@ export default function TerminalPane(): JSX.Element {
   const multiple = terminals.length > 1
 
   return (
-    <div className={mode === 'claude' ? 'pane terminal-pane claude-mode' : 'pane terminal-pane'}>
+    <div
+      className={isTerminal ? 'pane terminal-pane' : 'pane terminal-pane assistant-mode'}
+      style={{ '--provider': look.color } as React.CSSProperties}
+    >
       <div className="pane-header filetree-header">
         {isTerminal && multiple ? (
           // Plusieurs terminaux : le titre laisse place aux onglets.
@@ -110,8 +156,20 @@ export default function TerminalPane(): JSX.Element {
             ))}
           </span>
         ) : (
-          <span className={mode === 'claude' ? 'claude-title' : ''}>
-            {isTerminal ? t('terminal') : t('claude')}
+          <span className={isTerminal ? '' : 'assistant-title'}>
+            {isTerminal ? (
+              t('terminal')
+            ) : canSwitch ? (
+              <button
+                className="assistant-title-btn"
+                title={t('assistantSwitch')}
+                onClick={() => useAssistant.getState().setPicking(true)}
+              >
+                {active?.name ?? t('assistant')}
+              </button>
+            ) : (
+              (active?.name ?? t('assistant'))
+            )}
           </span>
         )}
 
@@ -129,22 +187,26 @@ export default function TerminalPane(): JSX.Element {
                 <Icon name="refresh" size={17} />
               </button>
               <button
-                className={claudeBusy ? 'icon-btn claude-btn claude-pulse' : 'icon-btn claude-btn'}
-                title={t('askClaude')}
-                onClick={() => setMode('claude')}
+                className={
+                  assistantBusy ? 'icon-btn assistant-btn assistant-pulse' : 'icon-btn assistant-btn'
+                }
+                title={t('askAssistant')}
+                onClick={() => setMode('assistant')}
               >
-                <Icon name="sparkle" size={17} />
+                <Icon name={look.icon} size={17} />
               </button>
             </>
           ) : (
             <>
-              <button
-                className="icon-btn"
-                title={t('claudeNew')}
-                onClick={() => useClaude.getState().reset()}
-              >
-                <Icon name="new-tab" size={17} />
-              </button>
+              {active && (
+                <button
+                  className="icon-btn"
+                  title={t('assistantNew')}
+                  onClick={() => useAssistant.getState().reset()}
+                >
+                  <Icon name="new-tab" size={17} />
+                </button>
+              )}
               <button
                 className="icon-btn"
                 title={t('backToTerminal')}
@@ -156,7 +218,7 @@ export default function TerminalPane(): JSX.Element {
           )}
         </span>
       </div>
-      {isTerminal ? <TerminalHostSlot id={activeId} /> : <ClaudePane />}
+      {isTerminal ? <TerminalHostSlot id={activeId} /> : <AssistantPane />}
     </div>
   )
 }

@@ -22,7 +22,7 @@ export const XTERM_THEMES: Record<Theme, ITheme> = {
 
 /* Un hôte par onglet de terminal. Chacun vit dans un élément DOM détaché,
    ré-attaché au panneau visible : il survit au démontage React (changement
-   d'onglet, de disposition, passage en mode Claude…). */
+   d'onglet, de disposition, passage en mode assistant…). */
 interface Host {
   el: HTMLDivElement
   term: Terminal
@@ -79,7 +79,7 @@ export function fitTerminal(id: string): void {
   if (host && host.el.clientWidth > 40 && host.el.clientHeight > 40) host.fit.fit()
 }
 
-/** À la ré-attache (retour du mode Claude, changement d'onglet ou de
+/** À la ré-attache (retour du mode assistant, changement d'onglet ou de
  *  disposition) : recale la grille et force un rendu complet, sinon
  *  l'affichage peut rester vide jusqu'au prochain redimensionnement. */
 export function refreshTerminal(id: string): void {
@@ -106,7 +106,12 @@ export function spawnTerminalIfNeeded(id: string): void {
 export function restartTerminal(id: string): void {
   const host = hosts.get(id)
   if (!host) return
-  host.term.clear()
+  /* reset() plutôt que clear() : le suivi de la souris, l'écran alterné et les
+     autres modes sont des états de l'ÉMULATEUR, pas du shell. Une application
+     plein écran tuée sans les désactiver les laisse actifs, et le terminal
+     continue alors d'écrire des rapports (« 35;41;3M ») à chaque mouvement —
+     y compris après relance, puisque clear() n'efface que l'affichage. */
+  host.term.reset()
   host.fit.fit()
   void window.stancode.pty.spawn(id, {
     cwd: useWorkspace.getState().rootPath ?? undefined,

@@ -18,12 +18,41 @@ export interface SearchMatch {
   text: string
 }
 
-/** Événements du flux « Demander à Claude » (CLI headless → renderer). */
-export type ClaudeEvent =
+/** Événement d'un assistant vers l'interface : identique pour tous les
+ *  fournisseurs, c'est ce qui permet au panneau d'ignorer lequel est branché.
+ *  Erreurs normalisées : 'not-found', 'not-authenticated', 'needs-setup',
+ *  'no-response', 'cancelled' ; tout autre message est affiché tel quel. */
+export type AssistantEvent =
   | { type: 'delta'; text: string }
   | { type: 'tool'; name: string; detail?: string }
   | { type: 'done'; isError: boolean }
   | { type: 'error'; message: string }
+
+/** 'agent' : lit et modifie les fichiers du dossier lui-même.
+ *  'chat'  : ne voit que le texte qu'on lui envoie. */
+export type AssistantKind = 'agent' | 'chat'
+
+/** État d'un fournisseur sur cette machine. 'unknown' : impossible de savoir
+ *  s'il est connecté (on le laisse essayer). 'needs-setup' : installé mais pas
+ *  utilisable en l'état (service arrêté, aucun modèle…), voir setupHint. */
+export type ProviderStatus = 'ready' | 'needs-login' | 'needs-setup' | 'missing' | 'unknown'
+
+/** Gamme de modèle choisie par l'utilisateur, traduite par chaque fournisseur
+ *  en modèle et/ou niveau d'effort : tâche simple, tâche complexe, raisonnement. */
+export type Tier = 'fast' | 'standard' | 'reasoning'
+
+export interface ProviderInfo {
+  id: string
+  name: string
+  kind: AssistantKind
+  status: ProviderStatus
+  /** commande à lancer au terminal pour se connecter, s'il y en a une */
+  loginCommand?: string
+  /** commande qui rend le fournisseur utilisable, quand status = 'needs-setup' */
+  setupHint?: string
+  /** gammes proposées, avec ce qu'elles désignent (affiché en infobulle) */
+  tiers: Partial<Record<Tier, string>>
+}
 
 /** État partagé de la radio (source de vérité dans le processus principal).
  *  `isOwner` est propre à chaque fenêtre : seule la porteuse émet le son. */

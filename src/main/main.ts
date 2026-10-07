@@ -113,7 +113,8 @@ function registerFileProtocol(): void {
 import { registerFsHandlers, disposeFsForWebContents } from './fs'
 import { registerPtyHandlers, disposePtyForWebContents } from './pty'
 import { registerSearchHandlers, disposeSearchForWebContents } from './search'
-import { registerClaudeHandlers, disposeClaudeForWebContents } from './claude'
+import { registerAssistantHandlers, disposeAssistantForWebContents } from './assistant'
+import { registerBacklinkHandler, registerLinkHandlers } from './links'
 import { registerContextMenu } from './contextMenu'
 import { setupMenu } from './menu'
 
@@ -252,7 +253,7 @@ export function createWindow(opts: WindowOpts = {}): void {
     disposeFsForWebContents(id)
     disposePtyForWebContents(id)
     disposeSearchForWebContents(id)
-    disposeClaudeForWebContents(id)
+    disposeAssistantForWebContents(id)
     handleRadioWindowClosed(id)
   })
 
@@ -275,6 +276,11 @@ export function createWindow(opts: WindowOpts = {}): void {
 // que l'app soit prête ; l'événement open-file peut précéder app.whenReady.
 let ready = false
 const openQueue: string[] = []
+
+/* Dév : STANOTE_DEBUG=1 ouvre le port d'inspection du renderer (CDP), ce qui
+   permet de piloter l'app pour vérifier un comportement. Sans effet sans la
+   variable, donc inoffensif pour l'app publiée. */
+if (process.env['STANOTE_DEBUG']) app.commandLine.appendSwitch('remote-debugging-port', '9222')
 
 // macOS : double-clic sur un .md dans le Finder.
 app.on('open-file', (event, path) => {
@@ -317,7 +323,9 @@ app.whenReady().then(async () => {
   registerFsHandlers()
   registerPtyHandlers()
   registerSearchHandlers()
-  registerClaudeHandlers()
+  registerAssistantHandlers()
+  registerLinkHandlers()
+  registerBacklinkHandler()
   registerRadioHandlers()
   registerPdfHandler()
   setupMenu({ onNewWindow: () => createWindow({ isNew: true }) })

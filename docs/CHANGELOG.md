@@ -4,6 +4,49 @@ All notable changes to Stanote are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## \[1.5.1] — 2026-09-27
+
+### Changed
+
+* The window title now carries the name of the open folder. It is invisible
+  inside the app, but macOS uses it to label each window in Mission Control —
+  where several windows all captioned "Stanote" could not be told apart.
+
+* The slash menu (the one behind the "+" button) is more compact: shorter rows,
+  smaller icons, and regular rather than bold entries. It went from roughly
+  470px tall to 343px, so it fits on a laptop screen.
+
+### Fixed
+
+* The block handle stays within view in a narrow pane. Since margins started
+  following the pane width, the "+" button sat outside the visible area; the
+  handle is now slimmer and closer to the text.
+
+## \[1.5.0] — 2026-09-14
+
+### Added
+
+* Links between notes: press Cmd+K, pick a note from the current folder or its
+  parent, and the link is inserted. Typing a name that does not exist yet
+  creates the note next to the current one.
+
+* Links follow their target. Move or rename a note from the file tree and every
+  link pointing to it is rewritten, as are the links inside the note itself.
+
+* Backlinks at the foot of a note: a collapsed line showing which notes point
+  here, hidden entirely when none do.
+
+## \[1.4.1] — 2026-09-07
+
+### Fixed
+
+* Note margins now follow the width of the pane: side by side, the text no
+  longer gets squeezed into two narrow columns.
+
+* Restarting the terminal now performs a full reset. A full-screen application
+  killed without switching mouse tracking off left the emulator reporting every
+  pointer move ("35;41;3M") — and restarting did not clear it.
+
 ## \[1.4.0] — 2026-09-02
 
 ### Added

@@ -1,5 +1,14 @@
 import { contextBridge, ipcRenderer, webUtils, type IpcRendererEvent } from 'electron'
-import type { ClaudeEvent, RadioState, SearchMatch, TreeNode, WorkspaceInfo } from '../shared/types'
+import type {
+  AssistantEvent,
+  ProviderInfo,
+  ProviderStatus,
+  RadioState,
+  SearchMatch,
+  Tier,
+  TreeNode,
+  WorkspaceInfo
+} from '../shared/types'
 
 function on<T>(channel: string, cb: (payload: T) => void): () => void {
   const listener = (_event: IpcRendererEvent, payload: T): void => cb(payload)
@@ -32,16 +41,16 @@ const api = {
     query: (root: string, query: string): Promise<SearchMatch[]> =>
       ipcRenderer.invoke('search:query', root, query)
   },
-  claude: {
-    available: (): Promise<boolean> => ipcRenderer.invoke('claude:available'),
-    /** true = session ouverte, false = non connecté, null = indéterminé */
-    loggedIn: (): Promise<boolean | null> => ipcRenderer.invoke('claude:loggedIn'),
-    send: (prompt: string, cwd: string): Promise<void> =>
-      ipcRenderer.invoke('claude:send', prompt, cwd),
-    cancel: (): Promise<void> => ipcRenderer.invoke('claude:cancel'),
-    reset: (): Promise<void> => ipcRenderer.invoke('claude:reset'),
-    onEvent: (cb: (event: ClaudeEvent) => void): (() => void) =>
-      on<ClaudeEvent>('claude:event', cb)
+  /** Assistants (Claude…) : chaque appel désigne le fournisseur par son id. */
+  assistant: {
+    providers: (): Promise<ProviderInfo[]> => ipcRenderer.invoke('assistant:providers'),
+    status: (id: string): Promise<ProviderStatus> => ipcRenderer.invoke('assistant:status', id),
+    send: (id: string, prompt: string, cwd: string, tier: Tier): Promise<void> =>
+      ipcRenderer.invoke('assistant:send', id, prompt, cwd, tier),
+    cancel: (id: string): Promise<void> => ipcRenderer.invoke('assistant:cancel', id),
+    reset: (id: string): Promise<void> => ipcRenderer.invoke('assistant:reset', id),
+    onEvent: (cb: (msg: { providerId: string; event: AssistantEvent }) => void): (() => void) =>
+      on<{ providerId: string; event: AssistantEvent }>('assistant:event', cb)
   },
   radio: {
     getState: (): Promise<RadioState> => ipcRenderer.invoke('radio:getState'),
@@ -60,6 +69,13 @@ const api = {
   syncTitleBarTheme: (theme: 'dark' | 'light'): void => {
     ipcRenderer.send('window:titleBarTheme', theme)
   },
+  /** Recalcule les liens entre notes après un déplacement ; renvoie le nombre
+   *  de fichiers modifiés. */
+  updateLinksAfterMove: (root: string, oldPath: string, newPath: string): Promise<number> =>
+    ipcRenderer.invoke('links:updateAfterMove', root, oldPath, newPath),
+  /** Notes qui pointent vers celle-ci (chemins absolus). */
+  backlinks: (root: string, target: string): Promise<string[]> =>
+    ipcRenderer.invoke('links:backlinks', root, target),
   /** URL locale d'aperçu d'un document (null si le serveur n'a pas démarré). */
   docUrl: (path: string): Promise<string | null> => ipcRenderer.invoke('doc:url', path),
   pdf: {
