@@ -108,7 +108,7 @@ function registerFileProtocol(): void {
 import { registerFsHandlers, disposeFsForWebContents } from './fs'
 import { registerPtyHandlers, disposePtyForWebContents } from './pty'
 import { registerSearchHandlers, disposeSearchForWebContents } from './search'
-import { registerClaudeHandlers, disposeClaudeForWebContents } from './claude'
+import { registerAssistantHandlers, disposeAssistantForWebContents } from './assistant'
 import { registerBacklinkHandler, registerLinkHandlers } from './links'
 import { registerContextMenu } from './contextMenu'
 import { setupMenu } from './menu'
@@ -240,7 +240,7 @@ export function createWindow(opts: WindowOpts = {}): void {
     disposeFsForWebContents(id)
     disposePtyForWebContents(id)
     disposeSearchForWebContents(id)
-    disposeClaudeForWebContents(id)
+    disposeAssistantForWebContents(id)
     handleRadioWindowClosed(id)
   })
 
@@ -280,7 +280,7 @@ app.whenReady().then(async () => {
   registerFsHandlers()
   registerPtyHandlers()
   registerSearchHandlers()
-  registerClaudeHandlers()
+  registerAssistantHandlers()
   registerLinkHandlers()
   registerBacklinkHandler()
   registerRadioHandlers()

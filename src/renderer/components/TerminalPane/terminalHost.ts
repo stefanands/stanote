@@ -22,7 +22,7 @@ export const XTERM_THEMES: Record<Theme, ITheme> = {
 
 /* Un hôte par onglet de terminal. Chacun vit dans un élément DOM détaché,
    ré-attaché au panneau visible : il survit au démontage React (changement
-   d'onglet, de disposition, passage en mode Claude…). */
+   d'onglet, de disposition, passage en mode assistant…). */
 interface Host {
   el: HTMLDivElement
   term: Terminal
@@ -79,7 +79,7 @@ export function fitTerminal(id: string): void {
   if (host && host.el.clientWidth > 40 && host.el.clientHeight > 40) host.fit.fit()
 }
 
-/** À la ré-attache (retour du mode Claude, changement d'onglet ou de
+/** À la ré-attache (retour du mode assistant, changement d'onglet ou de
  *  disposition) : recale la grille et force un rendu complet, sinon
  *  l'affichage peut rester vide jusqu'au prochain redimensionnement. */
 export function refreshTerminal(id: string): void {

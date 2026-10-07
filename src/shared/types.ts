@@ -18,12 +18,32 @@ export interface SearchMatch {
   text: string
 }
 
-/** Événements du flux « Demander à Claude » (CLI headless → renderer). */
-export type ClaudeEvent =
+/** Événement d'un assistant vers l'interface : identique pour tous les
+ *  fournisseurs, c'est ce qui permet au panneau d'ignorer lequel est branché.
+ *  Erreurs normalisées : 'not-found', 'not-authenticated', 'no-response',
+ *  'cancelled' ; tout autre message est affiché tel quel. */
+export type AssistantEvent =
   | { type: 'delta'; text: string }
   | { type: 'tool'; name: string; detail?: string }
   | { type: 'done'; isError: boolean }
   | { type: 'error'; message: string }
+
+/** 'agent' : lit et modifie les fichiers du dossier lui-même.
+ *  'chat'  : ne voit que le texte qu'on lui envoie. */
+export type AssistantKind = 'agent' | 'chat'
+
+/** État d'un fournisseur sur cette machine. 'unknown' : impossible de savoir
+ *  s'il est connecté (on le laisse essayer). */
+export type ProviderStatus = 'ready' | 'needs-login' | 'missing' | 'unknown'
+
+export interface ProviderInfo {
+  id: string
+  name: string
+  kind: AssistantKind
+  status: ProviderStatus
+  /** commande à lancer au terminal pour se connecter, s'il y en a une */
+  loginCommand?: string
+}
 
 /** État partagé de la radio (source de vérité dans le processus principal).
  *  `isOwner` est propre à chaque fenêtre : seule la porteuse émet le son. */
