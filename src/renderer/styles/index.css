@@ -1479,53 +1479,40 @@ body {
   background: var(--hover-strong);
 }
 
-/* Bandeau « connexion requise » du panneau Claude */
-/* En-tête du panneau assistant : dossier, capacités, état de connexion. */
-.assistant-header {
+/* Pied du panneau assistant, sous le champ : dossier de travail et ce que
+   l'assistant peut y faire. */
+.assistant-footer {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 6px;
   flex-shrink: 0;
-  padding: 6px 12px;
-  border-bottom: 1px solid var(--border);
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 0 12px 8px;
   font-size: 11px;
   color: var(--text-dim);
 }
 
-.assistant-header svg {
+.assistant-footer svg {
   flex-shrink: 0;
 }
 
 .assistant-cwd {
-  flex: 1;
+  flex-shrink: 0;
+  max-width: 45%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  color: var(--text);
 }
 
-.assistant-auth {
-  display: flex;
-  align-items: center;
-  background: none;
-  border: 0;
-  padding: 3px;
-  cursor: pointer;
-}
-
-.assistant-auth-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--accent);
-}
-
-.assistant-auth.off .assistant-auth-dot {
-  background: var(--warn-fg);
-}
-
-.assistant-kind {
-  flex-shrink: 0;
-  opacity: 0.8;
+.assistant-scope {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-style: italic;
 }
 
 /* Titre cliquable quand plusieurs fournisseurs sont installés */
@@ -1609,37 +1596,60 @@ body {
   cursor: default;
 }
 
-/* Gammes de modèle, au-dessus du champ de saisie */
-.assistant-tiers {
+/* Boutons à droite du champ : gamme au-dessus, envoi en dessous */
+.assistant-actions {
+  position: relative;
   display: flex;
+  flex-direction: column;
   gap: 2px;
   flex-shrink: 0;
-  padding: 0 12px;
 }
 
-.assistant-tier {
+.assistant-tier-btn,
+.assistant-tier-option {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 22px;
+  width: 32px;
+  height: 30px;
   border: 0;
-  border-radius: 5px;
+  border-radius: 7px;
   background: none;
   color: var(--text-dim);
   cursor: pointer;
 }
 
-.assistant-tier:hover {
+.assistant-tier-btn:hover,
+.assistant-tier-option:hover {
   background: var(--hover);
   color: var(--text);
 }
 
-.assistant-tier.active {
+.assistant-tier-btn.open {
+  background: var(--selected);
+}
+
+/* Les trois gammes, déployées vers la gauche du bouton */
+.assistant-tier-menu {
+  position: absolute;
+  right: calc(100% + 4px);
+  top: -3px;
+  z-index: 5;
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  box-shadow: 0 4px 14px var(--overlay);
+}
+
+.assistant-tier-option.active {
   background: var(--selected);
   color: var(--provider);
 }
 
+/* Bandeau « connexion requise » */
 .assistant-login-notice {
   display: flex;
   align-items: center;
@@ -1651,6 +1661,13 @@ body {
   background: var(--warn-bg);
   border-radius: 8px;
   flex-shrink: 0;
+}
+
+.assistant-login-notice .link-btn {
+  margin-left: auto;
+  flex-shrink: 0;
+  color: inherit;
+  font-size: 12px;
 }
 
 .assistant-login-notice svg {
@@ -1715,7 +1732,7 @@ body {
   display: flex;
   align-items: flex-end;
   gap: 6px;
-  padding: 8px 10px 10px;
+  padding: 8px 10px 6px;
   flex-shrink: 0;
   /* colonne alignée sur celle du fil */
   width: 100%;
@@ -1727,6 +1744,8 @@ body {
   flex: 1;
   min-width: 0;
   resize: none;
+  /* hauteur réglée au fil de la frappe (AssistantPane), ascenseur au-delà */
+  overflow-y: hidden;
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -1734,7 +1753,7 @@ body {
   font: inherit;
   font-size: 12.5px;
   line-height: 1.45;
-  padding: 6px 9px;
+  padding: 7px 10px;
   outline: none;
 }
 
@@ -1746,8 +1765,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   border-radius: 7px;
   flex-shrink: 0;
 }

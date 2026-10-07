@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { marked } from 'marked'
 import type { ProviderInfo, Tier } from '../../../shared/types'
 import {
@@ -59,27 +59,69 @@ const TIER_UI: { tier: Tier; icon: IconName; label: 'tierFast' | 'tierStandard' 
     { tier: 'reasoning', icon: 'brain', label: 'tierReasoning' }
   ]
 
-/** Choix de la gamme : seules celles que propose le fournisseur apparaissent,
- *  l'infobulle nomme le modèle ou l'effort correspondant. */
-function TierPicker({ provider }: { provider: ProviderInfo }): JSX.Element {
+/** Gamme en cours, au-dessus du bouton d'envoi ; un clic déplie les gammes
+ *  que propose le fournisseur, le choix les replie. L'infobulle nomme le
+ *  modèle ou l'effort correspondant. */
+function TierButton({ provider }: { provider: ProviderInfo }): JSX.Element | null {
   const t = useT()
   const tier = useAssistant((s) => s.tier)
-  const current = effectiveTier(provider, tier)
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  const options = TIER_UI.filter((u) => provider.tiers[u.tier])
+  const current = TIER_UI.find((u) => u.tier === effectiveTier(provider, tier)) ?? TIER_UI[1]
+
+  // Repli au clic ailleurs ou sur Échap.
+  useEffect(() => {
+    if (!open) return
+    const onDown = (e: MouseEvent): void => {
+      if (!ref.current?.contains(e.target as Node)) setOpen(false)
+    }
+    const onKey = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape') setOpen(false)
+    }
+    document.addEventListener('mousedown', onDown)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDown)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [open])
+
+  if (options.length < 2) return null // rien à choisir
+  const label = (u: (typeof TIER_UI)[number]): string => `${t(u.label)} — ${provider.tiers[u.tier]}`
+
   return (
-    <div className="assistant-tiers">
-      {TIER_UI.filter((u) => provider.tiers[u.tier]).map((u) => (
-        <button
-          key={u.tier}
-          className={u.tier === current ? 'assistant-tier active' : 'assistant-tier'}
-          title={`${t(u.label)} — ${provider.tiers[u.tier]}`}
-          onClick={() => useAssistant.getState().setTier(u.tier)}
-        >
-          <Icon name={u.icon} size={14} />
-        </button>
-      ))}
+    <div ref={ref}>
+      <button
+        className={open ? 'assistant-tier-btn open' : 'assistant-tier-btn'}
+        title={label(current)}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <Icon name={current.icon} size={18} />
+      </button>
+      {open && (
+        <div className="assistant-tier-menu">
+          {options.map((u) => (
+            <button
+              key={u.tier}
+              className={u.tier === current.tier ? 'assistant-tier-option active' : 'assistant-tier-option'}
+              title={label(u)}
+              onClick={() => {
+                useAssistant.getState().setTier(u.tier)
+                setOpen(false)
+              }}
+            >
+              <Icon name={u.icon} size={18} />
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
+
+/** Au-delà, le champ cesse de grandir et défile. */
+const INPUT_MAX_HEIGHT = 168
 
 /** Écran de choix : fournisseurs connus, leur état, et l'action utile pour
  *  chacun. Sans aucun fournisseur installé, il devient un écran d'accueil. */
@@ -154,6 +196,18 @@ export default function AssistantPane(): JSX.Element {
     inputRef.current?.focus()
   }, [])
 
+  // Champ d'une ligne par défaut, qui grandit avec le texte jusqu'à
+  // INPUT_MAX_HEIGHT, puis défile.
+  useLayoutEffect(() => {
+    const el = inputRef.current
+    if (!el) return
+    el.style.height = 'auto'
+    const border = el.offsetHeight - el.clientHeight
+    const wanted = el.scrollHeight + border
+    el.style.height = `${Math.min(wanted, INPUT_MAX_HEIGHT)}px`
+    el.style.overflowY = wanted > INPUT_MAX_HEIGHT ? 'auto' : 'hidden'
+  }, [input, active?.id])
+
   // Suit le fil : colle en bas à chaque nouveau contenu.
   useEffect(() => {
     const el = scrollRef.current
@@ -191,24 +245,6 @@ export default function AssistantPane(): JSX.Element {
 
   return (
     <div className="assistant-pane">
-      {/* Où l'assistant travaille, ce qu'il peut faire, et s'il est connecté :
-          sans ça, rien de tout ça n'est visible avant le premier échange. */}
-      <div className="assistant-header">
-        <Icon name="folder" size={12} />
-        <span className="assistant-cwd" title={rootPath ?? t('assistantFolder')}>
-          {rootName ?? t('assistantNoFolder')}
-        </span>
-        <span className="assistant-kind">
-          {active.kind === 'agent' ? t('assistantKindAgent') : t('assistantKindChat')}
-        </span>
-        <button
-          className={needsLogin ? 'assistant-auth off' : 'assistant-auth'}
-          title={needsLogin ? t('assistantOffline', { name }) : t('assistantOnline', { name })}
-          onClick={() => void useAssistant.getState().refresh()}
-        >
-          <span className="assistant-auth-dot" />
-        </button>
-      </div>
       {needsLogin && (
         <div className="assistant-login-notice">
           <Icon name={look.icon} size={12} />
@@ -217,18 +253,15 @@ export default function AssistantPane(): JSX.Element {
               ? t('assistantNeedsLogin', { cmd: active.loginCommand })
               : t('assistantNeedsLoginPlain', { name })}
           </span>
+          <button className="link-btn" onClick={() => void useAssistant.getState().refresh()}>
+            {t('assistantRecheck')}
+          </button>
         </div>
       )}
       <div className="assistant-scroll" ref={scrollRef}>
-        {messages.length === 0 && (
+        {messages.length === 0 && !rootPath && (
           <div className="pane-placeholder">
-            <p className="hint">
-              {!rootPath
-                ? t('assistantOpenFolder')
-                : active.kind === 'agent'
-                  ? t('assistantEmptyAgent', { name })
-                  : t('assistantEmptyChat', { name })}
-            </p>
+            <p className="hint">{t('assistantOpenFolder')}</p>
           </div>
         )}
         {toBlocks(messages).map((block, i) => {
@@ -294,12 +327,11 @@ export default function AssistantPane(): JSX.Element {
           </div>
         )}
       </div>
-      <TierPicker provider={active} />
       <div className="assistant-input-row">
         <textarea
           ref={inputRef}
           className="assistant-input"
-          rows={2}
+          rows={1}
           disabled={!rootPath}
           placeholder={t('assistantPlaceholder')}
           value={input}
@@ -311,21 +343,38 @@ export default function AssistantPane(): JSX.Element {
             }
           }}
         />
-        {busy ? (
-          <button className="icon-btn assistant-send" title={t('assistantStop')} onClick={cancel}>
-            <Icon name="stop" size={15} />
-          </button>
-        ) : (
-          <button
-            className="icon-btn assistant-send"
-            title={t('assistantSend')}
-            disabled={!rootPath}
-            onClick={submit}
-          >
-            <Icon name="send" size={15} />
-          </button>
-        )}
+        <div className="assistant-actions">
+          <TierButton provider={active} />
+          {busy ? (
+            <button className="icon-btn assistant-send" title={t('assistantStop')} onClick={cancel}>
+              <Icon name="stop" size={17} />
+            </button>
+          ) : (
+            <button
+              className="icon-btn assistant-send"
+              title={t('assistantSend')}
+              disabled={!rootPath}
+              onClick={submit}
+            >
+              <Icon name="send" size={17} />
+            </button>
+          )}
+        </div>
       </div>
+      {rootPath && (
+        <div className="assistant-footer">
+          <Icon name="folder" size={12} />
+          <span className="assistant-cwd" title={rootPath}>
+            {rootName}
+          </span>
+          <span className="assistant-scope">
+            —{' '}
+            {active.kind === 'agent'
+              ? t('assistantScopeAgent', { name })
+              : t('assistantScopeChat', { name })}
+          </span>
+        </div>
+      )}
     </div>
   )
 }
