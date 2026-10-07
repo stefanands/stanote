@@ -4,6 +4,41 @@ All notable changes to Stanote are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## \[1.6.0] — 2026-10-07
+
+### Added
+
+* A choice of assistants: Claude, Mistral (through Mistral Vibe), Codex and
+  Ollama are detected automatically. Each keeps its own conversation, so
+  switching from one to another and back picks up where you left off.
+
+* Model tiers — simple task, complex task, reasoning — translated by each
+  assistant into a model or an effort level.
+
+* Ollama, with an agent built into Stanote: local models can list, read,
+  search, write and edit files, strictly within the open folder.
+
+### Changed
+
+* The bottom panel now opens on the assistant rather than the terminal; the
+  last mode you chose is remembered.
+
+* A leaner assistant panel: a one-line input that grows with the text, the
+  tier button above the send button, and the working folder shown below.
+
+* When an assistant is not signed in or not ready, the panel says what to do,
+  with a "Check again" link.
+
+* Mistral Vibe is limited to file tools: left unrestricted, its shell tool runs
+  commands without asking.
+
+### Fixed
+
+* The title bar icons stay on the right when no file is open.
+
+* With no folder open, the assistant can no longer start in an arbitrary
+  directory: sending is disabled until a folder is opened.
+
 ## \[1.5.1] — 2026-09-27
 
 ### Changed
