@@ -19,6 +19,7 @@ protocol.registerSchemesAsPrivileged([
 
 const APP_MIME: Record<string, string> = {
   '.html': 'text/html',
+  '.htm': 'text/html',
   '.js': 'text/javascript',
   '.mjs': 'text/javascript',
   '.css': 'text/css',
@@ -38,6 +39,28 @@ const APP_MIME: Record<string, string> = {
   '.woff2': 'font/woff2',
   '.ttf': 'font/ttf',
   '.map': 'application/json'
+}
+
+/* Relais de clics injecté dans les pages HTML de l'utilisateur : l'aperçu
+   tourne dans une iframe isolée, qui ne peut rien ouvrir dans l'application.
+   Un clic sur un lien est donc transmis à Stanote, qui ouvre le fichier dans
+   un onglet (ou la page web dans le navigateur). Un script de la page qui
+   traite déjà le clic (preventDefault) garde la main. */
+const LINK_RELAY =
+  '<script>(function(){document.addEventListener("click",function(e){' +
+  'if(e.defaultPrevented||e.button!==0)return;' +
+  'var a=e.target&&e.target.closest&&e.target.closest("a[href]");if(!a)return;' +
+  'var h=a.getAttribute("href");if(!h||h.charAt(0)==="#"||/^javascript:/i.test(h))return;' +
+  'e.preventDefault();' +
+  'parent.postMessage({stanote:"open-link",href:h,other:e.metaKey||e.ctrlKey},"*")' +
+  '})})()</script>'
+
+/** Insère le relais juste après <head> (ou en tête). Travaille sur les octets :
+ *  une page dans un autre encodage que l'UTF-8 reste intacte. */
+function withLinkRelay(data: Buffer): Buffer {
+  const head = /<head[^>]*>/i.exec(data.toString('latin1'))
+  const at = head ? head.index + head[0].length : 0
+  return Buffer.concat([data.subarray(0, at), Buffer.from(LINK_RELAY), data.subarray(at)])
 }
 
 /** Origine http du serveur local. null tant que non démarré. */
@@ -73,8 +96,10 @@ function startAppServer(): Promise<string> {
             const rel = rawPath === '/' || rawPath === '' ? '/index.html' : rawPath
             file = join(rendererDir, rel.replace(/^(\.\.[/\\])+/, ''))
           }
-          const data = await fsp.readFile(file)
+          const raw = await fsp.readFile(file)
           const ext = file.slice(file.lastIndexOf('.')).toLowerCase()
+          const isUserPage = rawPath.startsWith('/__doc/') && (ext === '.html' || ext === '.htm')
+          const data = isUserPage ? withLinkRelay(raw) : raw
           res.writeHead(200, { 'content-type': APP_MIME[ext] ?? 'application/octet-stream' })
           res.end(data)
         } catch {

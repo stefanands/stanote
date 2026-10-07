@@ -1,4 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { useTabs } from '../../stores/tabs'
+import { useWorkspace } from '../../stores/workspace'
+import { useT } from '../../i18n'
+import { isInside, resolveLink } from '../../lib/path'
 
 type Kind = 'pdf' | 'image' | 'html'
 
@@ -40,6 +44,39 @@ export default function DocumentViewer({ path, kind, content }: Props): JSX.Elem
   /** URL servie en local : permet au document d'exécuter son JavaScript. */
   const [docUrl, setDocUrl] = useState<string | null>(null)
   const [docUrlReady, setDocUrlReady] = useState(false)
+  const frameRef = useRef<HTMLIFrameElement>(null)
+  const t = useT()
+  // Message lu depuis un écouteur natif : gardé en ref pour rester à jour.
+  const missingRef = useRef(t('linkMissing'))
+  missingRef.current = t('linkMissing')
+
+  /* Liens de la page : relayés par le script que le serveur local injecte.
+     Un fichier du dossier ouvert s'ouvre dans un onglet (Cmd : dans l'autre
+     colonne), une adresse web dans le navigateur. Seuls les messages de cette
+     iframe sont écoutés, et rien hors du dossier ouvert n'est ouvert. */
+  useEffect(() => {
+    if (kind !== 'html') return
+    const onMessage = (e: MessageEvent): void => {
+      if (!frameRef.current || e.source !== frameRef.current.contentWindow) return
+      const data = e.data as { stanote?: string; href?: unknown; other?: unknown }
+      if (data?.stanote !== 'open-link' || typeof data.href !== 'string') return
+      const href = data.href.trim()
+      if (/^(https?|mailto):/i.test(href)) {
+        window.open(href, '_blank')
+        return
+      }
+      const target = resolveLink(path, href)
+      const root = useWorkspace.getState().rootPath
+      if (!target || !root || !isInside(root, target)) return
+      const tabs = useTabs.getState()
+      if (data.other === true) tabs.focusPane(tabs.focusedPane === 0 ? 1 : 0)
+      void tabs.openFile(target).then(() => {
+        if (!useTabs.getState().tabs.some((tb) => tb.path === target)) alert(missingRef.current)
+      })
+    }
+    window.addEventListener('message', onMessage)
+    return () => window.removeEventListener('message', onMessage)
+  }, [kind, path])
 
   // Rechargé à chaque changement de contenu : l'aperçu suit les modifications
   // enregistrées (l'auto-save écrit le fichier que sert le serveur local).
@@ -96,7 +133,13 @@ export default function DocumentViewer({ path, kind, content }: Props): JSX.Elem
     // donc aucun accès à l'application, à ses données ni aux fichiers.
     if (docUrl) {
       return (
-        <iframe className="doc-viewer" sandbox="allow-scripts" src={docUrl} title="preview" />
+        <iframe
+          ref={frameRef}
+          className="doc-viewer"
+          sandbox="allow-scripts"
+          src={docUrl}
+          title="preview"
+        />
       )
     }
     // Repli si le serveur local n'a pas démarré : rendu sans JavaScript.
