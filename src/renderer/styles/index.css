@@ -134,6 +134,8 @@ body {
 .titlebar-actions {
   display: flex;
   gap: 2px;
+  /* toujours à droite, même sans onglet ouvert pour lui faire contrepoids */
+  margin-left: auto;
   -webkit-app-region: no-drag;
 }
 
