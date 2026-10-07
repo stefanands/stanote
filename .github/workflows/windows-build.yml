@@ -1,12 +1,20 @@
-name: Windows build (test)
+name: Windows (bêta)
 
-# Build de test pour le portage Windows : produit un installeur .exe
-# téléchargeable dans l'onglet Actions (aucune publication de release).
-# Sert de vérification que node-pty se recompile et que le paquet se construit.
+# Bêta Windows : à chaque push sur la branche windows, construit l'installeur
+# et le publie en pré-version GitHub « windows-beta ». Marquée Pre-release,
+# elle n'est jamais présentée comme la dernière version du dépôt. Son tag ne
+# commence pas par « v » : il ne déclenche pas le workflow Release.
 on:
   push:
     branches: [windows]
   workflow_dispatch:
+
+permissions:
+  contents: write # création de la pré-version
+
+env:
+  # À incrémenter à chaque nouvelle bêta publiée.
+  BETA_VERSION: 1.6.0-beta.1
 
 jobs:
   build-windows:
@@ -26,10 +34,25 @@ jobs:
       - name: Build & package (Windows, non signé)
         run: |
           npx electron-vite build
-          npx electron-builder --win --publish never
+          npx electron-builder --win --publish never -c.extraMetadata.version=${{ env.BETA_VERSION }}
 
       - uses: actions/upload-artifact@v4
         with:
           name: stanote-windows-installer
           path: release/*.exe
           if-no-files-found: error
+
+      # Une seule pré-version, remplacée à chaque push : les testeurs gardent
+      # la même adresse de téléchargement.
+      - name: Publier la pré-version windows-beta
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          sed "s/{{VERSION}}/$BETA_VERSION/g" .github/windows-beta-notes.md > notes.md
+          gh release delete windows-beta --cleanup-tag --yes || true
+          gh release create windows-beta release/*.exe \
+            --prerelease \
+            --target "$GITHUB_SHA" \
+            --title "Stanote pour Windows — bêta $BETA_VERSION" \
+            --notes-file notes.md
