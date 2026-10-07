@@ -75,6 +75,8 @@ const dict = {
     assistantNeedsLogin:
       'Connexion requise : ouvre le terminal, lance « {cmd} », puis reviens ici.',
     assistantNeedsLoginPlain: 'Connexion requise pour utiliser {name}.',
+    assistantNeedsSetup: '{name} n’est pas prêt : ouvre le terminal, lance « {cmd} », puis reviens ici.',
+    assistantNeedsSetupPlain: '{name} n’est pas prêt pour l’instant.',
     assistantOpenFolder: 'Ouvrez un dossier pour commencer.',
     assistantKindAgent: 'peut modifier les fichiers',
     assistantKindChat: 'lit la note ouverte',
@@ -84,6 +86,7 @@ const dict = {
     assistantDetecting: 'Recherche des assistants…',
     assistantReady: 'Prêt',
     assistantLoginShort: 'Connexion requise',
+    assistantSetupShort: 'À configurer',
     assistantMissing: 'Non installé',
     assistantUse: 'Utiliser',
     assistantInstall: 'Installer',
@@ -171,6 +174,8 @@ const dict = {
     assistantNeedsLogin:
       'Sign-in required: open the terminal, run "{cmd}", then come back here.',
     assistantNeedsLoginPlain: 'Sign-in required to use {name}.',
+    assistantNeedsSetup: '{name} is not ready: open the terminal, run "{cmd}", then come back here.',
+    assistantNeedsSetupPlain: '{name} is not ready yet.',
     assistantOpenFolder: 'Open a folder to get started.',
     assistantKindAgent: 'can edit files',
     assistantKindChat: 'reads the open note',
@@ -180,6 +185,7 @@ const dict = {
     assistantDetecting: 'Looking for assistants…',
     assistantReady: 'Ready',
     assistantLoginShort: 'Sign-in required',
+    assistantSetupShort: 'Needs setup',
     assistantMissing: 'Not installed',
     assistantUse: 'Use',
     assistantInstall: 'Install',

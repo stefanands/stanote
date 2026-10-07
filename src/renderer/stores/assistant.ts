@@ -219,6 +219,8 @@ window.stancode.assistant.onEvent(({ providerId, event }) => {
       markStatus(providerId, 'missing')
     } else if (event.message === 'not-authenticated' || event.message === 'no-response') {
       markStatus(providerId, 'needs-login')
+    } else if (event.message === 'needs-setup') {
+      markStatus(providerId, 'needs-setup')
     } else if (event.message !== 'cancelled') {
       updateThread(providerId, (t) => ({
         messages: [...t.messages, { role: 'assistant', text: `⚠︎ ${event.message}` }]

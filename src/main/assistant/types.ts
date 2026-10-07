@@ -2,6 +2,13 @@ import type { AssistantEvent, AssistantKind, ProviderStatus, Tier } from '../../
 
 export type Emit = (event: AssistantEvent) => void
 
+/** État détaillé : statut, et ce qui en dépend sur cette machine. */
+export interface ProviderState {
+  status: ProviderStatus
+  tiers?: Partial<Record<Tier, string>>
+  setupHint?: string
+}
+
 /** Une conversation avec un fournisseur, propre à une fenêtre. */
 export interface AssistantSession {
   /** Envoie un message ; la réponse arrive par `emit`, close par 'done' ou 'error'.
@@ -23,9 +30,11 @@ export interface Provider {
   kind: AssistantKind
   /** commande de connexion au terminal, s'il y en a une */
   loginCommand?: string
-  /** gammes proposées et ce qu'elles désignent ; 'standard' est obligatoire */
+  /** gammes proposées et ce qu'elles désignent ; 'standard' est obligatoire.
+   *  Un fournisseur dont les gammes dépendent de la machine (Ollama : les
+   *  modèles installés) les renvoie plutôt depuis status(). */
   tiers: Partial<Record<Tier, string>> & { standard: string }
   /** Installé ? connecté ? Revérifié à chaque appel. */
-  status(): Promise<ProviderStatus>
+  status(): Promise<ProviderStatus | ProviderState>
   createSession(): AssistantSession
 }

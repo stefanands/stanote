@@ -4,11 +4,12 @@ import type { AssistantSession, Provider } from './types'
 import { claudeProvider } from './claude'
 import { codexProvider } from './codex'
 import { mistralProvider } from './mistral'
+import { ollamaProvider } from './ollama'
 
 /* Registre des fournisseurs d'assistant. L'interface ne parle qu'à ces canaux
    « assistant:* », en désignant le fournisseur par son id : en ajouter un se
    limite à l'inscrire dans PROVIDERS. */
-const PROVIDERS: Provider[] = [claudeProvider, mistralProvider, codexProvider]
+const PROVIDERS: Provider[] = [claudeProvider, mistralProvider, codexProvider, ollamaProvider]
 
 const byId = (id: string): Provider | undefined => PROVIDERS.find((p) => p.id === id)
 
@@ -38,20 +39,27 @@ export function registerAssistantHandlers(): void {
   // Tous les fournisseurs connus, avec leur état sur cette machine.
   ipcMain.handle('assistant:providers', async (): Promise<ProviderInfo[]> =>
     Promise.all(
-      PROVIDERS.map(async (p) => ({
-        id: p.id,
-        name: p.name,
-        kind: p.kind,
-        status: await p.status(),
-        tiers: p.tiers,
-        ...(p.loginCommand ? { loginCommand: p.loginCommand } : {})
-      }))
+      PROVIDERS.map(async (p) => {
+        const raw = await p.status()
+        const state = typeof raw === 'string' ? { status: raw } : raw
+        return {
+          id: p.id,
+          name: p.name,
+          kind: p.kind,
+          status: state.status,
+          tiers: state.tiers ?? p.tiers,
+          ...(p.loginCommand ? { loginCommand: p.loginCommand } : {}),
+          ...(state.setupHint ? { setupHint: state.setupHint } : {})
+        }
+      })
     )
   )
 
   ipcMain.handle('assistant:status', async (_e, id: string): Promise<ProviderStatus> => {
     const provider = byId(id)
-    return provider ? provider.status() : 'missing'
+    if (!provider) return 'missing'
+    const raw = await provider.status()
+    return typeof raw === 'string' ? raw : raw.status
   })
 
   ipcMain.handle(

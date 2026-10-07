@@ -143,7 +143,9 @@ function ProviderPicker({ providers }: { providers: ProviderInfo[] }): JSX.Eleme
               ? t('assistantMissing')
               : p.status === 'needs-login'
                 ? t('assistantLoginShort')
-                : t('assistantReady')
+                : p.status === 'needs-setup'
+                  ? t('assistantSetupShort')
+                  : t('assistantReady')
           return (
             <li key={p.id} className="assistant-picker-item">
               <span className="assistant-picker-icon" style={{ color: look.color }}>
@@ -235,6 +237,7 @@ export default function AssistantPane(): JSX.Element {
   const name = active.name
   const look = lookOf(active.id)
   const needsLogin = active.status === 'needs-login'
+  const needsSetup = active.status === 'needs-setup'
 
   const submit = (): void => {
     const text = input.trim()
@@ -245,13 +248,17 @@ export default function AssistantPane(): JSX.Element {
 
   return (
     <div className="assistant-pane">
-      {needsLogin && (
+      {(needsLogin || needsSetup) && (
         <div className="assistant-login-notice">
           <Icon name={look.icon} size={12} />
           <span>
-            {active.loginCommand
-              ? t('assistantNeedsLogin', { cmd: active.loginCommand })
-              : t('assistantNeedsLoginPlain', { name })}
+            {needsSetup
+              ? active.setupHint
+                ? t('assistantNeedsSetup', { name, cmd: active.setupHint })
+                : t('assistantNeedsSetupPlain', { name })
+              : active.loginCommand
+                ? t('assistantNeedsLogin', { cmd: active.loginCommand })
+                : t('assistantNeedsLoginPlain', { name })}
           </span>
           <button className="link-btn" onClick={() => void useAssistant.getState().refresh()}>
             {t('assistantRecheck')}

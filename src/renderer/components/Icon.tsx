@@ -40,6 +40,7 @@ export type IconName =
   | 'brain'
   | 'wind'
   | 'hexagon'
+  | 'home'
 
 const paths: Record<IconName, JSX.Element> = {
   chevron: <polyline points="6 3.5 10.5 8 6 12.5" />,
@@ -167,6 +168,13 @@ const paths: Record<IconName, JSX.Element> = {
       <path d="M2 6h8.2a2 2 0 1 0-2-2" />
       <path d="M2 9h10.5a2 2 0 1 1-2 2" />
       <path d="M2 12h4.5" />
+    </>
+  ),
+  home: (
+    <>
+      <path d="M2.5 7.5 8 3l5.5 4.5" />
+      <path d="M4 6.5v6.5h8V6.5" />
+      <path d="M6.8 13v-3.2h2.4V13" />
     </>
   ),
   /* Codex : hexagone et invite de commande, sans reprendre de logo. */

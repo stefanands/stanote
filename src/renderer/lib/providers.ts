@@ -24,6 +24,12 @@ const LOOKS: Record<string, ProviderLook> = {
     icon: 'wind',
     color: 'var(--mistral)',
     installUrl: 'https://docs.mistral.ai/mistral-vibe/introduction'
+  },
+  /* Ollama : une maison, le modèle tourne sur l'ordinateur. */
+  ollama: {
+    icon: 'home',
+    color: 'var(--accent)',
+    installUrl: 'https://ollama.com/download'
   }
 }
 
