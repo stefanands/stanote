@@ -6,7 +6,7 @@ Le contenu est celui de **Stanote 1.6.0** pour Mac : éditeur de notes en markdo
 
 ### Installation
 
-1. Téléchargez `Stanote Setup {{VERSION}}.exe` ci-dessous, puis lancez-le.
+1. Téléchargez `Stanote.Setup.{{VERSION}}.exe` ci-dessous, puis lancez-le.
 2. L'installeur n'est pas encore signé : Windows SmartScreen affiche un avertissement. Cliquez sur **Informations complémentaires**, puis sur **Exécuter quand même**.
 3. Stanote s'installe dans votre dossier utilisateur, sans droits d'administrateur.
 
