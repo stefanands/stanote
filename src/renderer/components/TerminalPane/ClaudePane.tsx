@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { marked } from 'marked'
 import { useClaude, type ClaudeMessage } from '../../stores/claude'
+import { useWorkspace } from '../../stores/workspace'
 import { useI18n, useT } from '../../i18n'
 import Icon from '../Icon'
 
@@ -47,13 +48,18 @@ export default function ClaudePane(): JSX.Element {
   const t = useT()
   const locale = useI18n((s) => s.locale)
   const { messages, busy, currentTool, available, needsLogin, send, cancel } = useClaude()
+  const rootName = useWorkspace((s) => s.rootName)
+  const rootPath = useWorkspace((s) => s.rootPath)
   const [input, setInput] = useState('')
   const [openTools, setOpenTools] = useState<Set<number>>(new Set())
   const scrollRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
-    void useClaude.getState().checkAvailable()
+    void useClaude
+      .getState()
+      .checkAvailable()
+      .then(() => useClaude.getState().refreshLogin())
     inputRef.current?.focus()
   }, [])
 
@@ -82,6 +88,21 @@ export default function ClaudePane(): JSX.Element {
 
   return (
     <div className="claude-pane">
+      {/* Où Claude travaille, et s'il est connecté : sans ça, ni l'un ni
+          l'autre n'est visible avant le premier échange. */}
+      <div className="claude-header">
+        <Icon name="folder" size={12} />
+        <span className="claude-cwd" title={rootPath ?? t('claudeFolder')}>
+          {rootName ?? t('claudeNoFolder')}
+        </span>
+        <button
+          className={needsLogin ? 'claude-auth off' : 'claude-auth'}
+          title={needsLogin ? t('claudeOffline') : t('claudeOnline')}
+          onClick={() => void useClaude.getState().refreshLogin()}
+        >
+          <span className="claude-auth-dot" />
+        </button>
+      </div>
       {needsLogin && (
         <div className="claude-login-notice">
           <Icon name="sparkle" size={12} />

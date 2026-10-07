@@ -74,6 +74,10 @@ const dict = {
     claudeNeedsLogin:
       'Connexion requise : ouvre le terminal, lance « claude auth login », puis reviens ici.',
     claudeLoginHint: 'Nécessite Claude Code installé et une session ouverte.',
+    claudeFolder: 'Dossier de travail de Claude',
+    claudeNoFolder: 'aucun dossier ouvert',
+    claudeOnline: 'Session Claude ouverte — cliquez pour revérifier',
+    claudeOffline: 'Claude n’est pas connecté — cliquez pour revérifier',
     radioTitle: 'Radio lofi',
     radioPlay: 'Lecture',
     radioPause: 'Pause',
@@ -153,6 +157,10 @@ const dict = {
     claudeNeedsLogin:
       'Sign-in required: open the terminal, run "claude auth login", then come back here.',
     claudeLoginHint: 'Requires Claude Code installed and signed in.',
+    claudeFolder: "Claude's working folder",
+    claudeNoFolder: 'no folder open',
+    claudeOnline: 'Claude session open — click to check again',
+    claudeOffline: 'Claude is not signed in — click to check again',
     radioTitle: 'Lofi radio',
     radioPlay: 'Play',
     radioPause: 'Pause',

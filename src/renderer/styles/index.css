@@ -1473,6 +1473,49 @@ body {
 }
 
 /* Bandeau « connexion requise » du panneau Claude */
+/* En-tête du panneau Claude : dossier de travail et état de connexion. */
+.claude-header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-shrink: 0;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.claude-header svg {
+  flex-shrink: 0;
+}
+
+.claude-cwd {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.claude-auth {
+  display: flex;
+  align-items: center;
+  background: none;
+  border: 0;
+  padding: 3px;
+  cursor: pointer;
+}
+
+.claude-auth-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.claude-auth.off .claude-auth-dot {
+  background: var(--warn-fg);
+}
+
 .claude-login-notice {
   display: flex;
   align-items: center;

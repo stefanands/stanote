@@ -19,6 +19,8 @@ interface ClaudeState {
   /** le CLI existe mais aucune session ouverte : il faut se connecter */
   needsLogin: boolean
   checkAvailable: () => Promise<void>
+  /** revérifie l'état de connexion (après un « claude auth login » au terminal) */
+  refreshLogin: () => Promise<void>
   send: (prompt: string) => void
   cancel: () => void
   reset: () => void
@@ -37,6 +39,11 @@ export const useClaude = create<ClaudeState>((set, get) => ({
     set({ available })
     // Prévenir avant le premier envoi plutôt que de laisser l'attente tourner.
     if (available) set({ needsLogin: (await window.stancode.claude.loggedIn()) === false })
+  },
+
+  refreshLogin: async () => {
+    if (get().available === false) return
+    set({ needsLogin: (await window.stancode.claude.loggedIn()) === false })
   },
 
   send: (prompt) => {
@@ -59,6 +66,16 @@ export const useClaude = create<ClaudeState>((set, get) => ({
     set({ messages: [], busy: false, currentTool: null })
   }
 }))
+
+/* Changer de dossier change le répertoire de travail de Claude : poursuivre la
+   conversation précédente le laisserait raisonner sur l'ancien dossier, dont il
+   n'a plus l'accès. On repart donc d'un fil vierge. */
+let lastRoot = useWorkspace.getState().rootPath
+useWorkspace.subscribe((s) => {
+  if (s.rootPath === lastRoot) return
+  lastRoot = s.rootPath
+  if (useClaude.getState().messages.length > 0) useClaude.getState().reset()
+})
 
 /* Flux d'événements du main : le texte arrive en deltas, on l'agrège dans le
  * dernier message assistant (créé au premier delta du tour). */
