@@ -4,6 +4,22 @@ All notable changes to Stanote are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## \[1.6.1] — 2026-10-13
+
+### Changed
+
+* Links in an HTML page now open in Stanote: a note opens in a tab (Cmd+click:
+  in the other column), a web address in the browser. Only files inside the
+  open folder can be opened this way.
+
+### Fixed
+
+* Accented characters in HTML pages that do not declare their encoding were
+  shown as "Ã©" instead of "é".
+
+* The assistant's input field could stay several lines tall once the panel was
+  widened.
+
 ## \[1.6.0] — 2026-10-07
 
 ### Added
