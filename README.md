@@ -22,7 +22,7 @@ Les fichiers restent sur votre Mac, dans leurs formats habituels. Stanote n’im
 
 - **Éditeur Markdown** — mise en forme directe pour les notes, documents, listes, tableaux et extraits de code. Plusieurs fichiers peuvent rester ouverts, avec sauvegarde automatique.
 - **Dossier de travail** — navigateur de fichiers, recherche plein texte, ouverture rapide, création, renommage et synchronisation avec les changements réalisés hors de l’application.
-- **IA dans le contexte du projet** — le panneau Claude permet de travailler à partir du dossier ouvert : l’assistant peut lire, modifier et créer les fichiers nécessaires au projet.
+- **IA dans le contexte du projet** — le panneau assistant travaille à partir du dossier ouvert, avec l’IA de votre choix : Claude, Mistral, Codex, ou Ollama en local. Une gamme s’adapte à chaque demande (tâche simple, tâche complexe, raisonnement), et l’assistant peut lire, modifier et créer les fichiers nécessaires au projet.
 - **Fichiers texte et pages web** — les formats usuels s’ouvrent dans un éditeur adapté. Les pages HTML peuvent être consultées sous forme de rendu interactif ou modifiées directement.
 - **Terminal intégré** — exécutez vos commandes dans le dossier du projet, sans changer d’application.
 - **Consultation de documents** — aperçu des PDF, images et pages web au sein de l’interface.
@@ -37,6 +37,8 @@ Les fichiers restent sur votre Mac, dans leurs formats habituels. Stanote n’im
 Ouvrez le fichier DMG, puis faites glisser Stanote dans le dossier **Applications**.
 
 > L’application est signée et notarisée par Apple : elle s’ouvre normalement depuis macOS.
+
+Une version Windows est disponible en bêta : [Stanote pour Windows](https://github.com/stefanands/stanote/releases/tag/windows-beta).
 
 ## Compiler depuis les sources
 
