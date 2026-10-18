@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import MilkdownEditor from './MilkdownEditor'
 import CodeEditor from './CodeEditor'
 import Backlinks from './Backlinks'
+import FrontmatterHeader from './FrontmatterHeader'
+import { frontmatterText, keepObsidianSyntax, splitFrontmatter } from '../../lib/markdown'
 import DocumentViewer from './DocumentViewer'
 import TabBar, { TAB_DRAG_TYPE } from '../TabBar'
 import Icon from '../Icon'
@@ -31,6 +33,10 @@ export default function EditorPane({ pane = 0 }: Props): JSX.Element {
   const active = tabs.find((tb) => tb.path === activePath)
   const kind = active ? (active.untitled ? 'markdown' : fileKind(active.path)) : 'other'
   const splitOpen = tabs.some((tb) => tb.pane === 1)
+  /* Note markdown : le frontmatter est tenu hors de l'éditeur WYSIWYG (qui le
+     détruirait) et recollé tel quel à chaque enregistrement. */
+  const note =
+    active && kind === 'markdown' ? splitFrontmatter(contents[active.path] ?? '') : null
 
   // Chaque fichier s'ouvre en aperçu.
   useEffect(() => setHtmlAsCode(false), [activePath])
@@ -96,12 +102,20 @@ export default function EditorPane({ pane = 0 }: Props): JSX.Element {
       {active ? (
         kind === 'markdown' ? (
           <>
+            {note?.front && (
+              <FrontmatterHeader
+                front={note.front}
+                onChange={(front) => updateContent(active.path, frontmatterText(front) + note.body)}
+              />
+            )}
             <MilkdownEditor
               key={`${active.path}:${active.version}:${locale}`}
               path={active.path}
-              initialValue={contents[active.path] ?? ''}
+              initialValue={note?.body ?? ''}
               locale={locale}
-              onChange={(md) => updateContent(active.path, md)}
+              onChange={(md) =>
+                updateContent(active.path, frontmatterText(note?.front ?? null) + keepObsidianSyntax(md))
+              }
             />
             {!active.untitled && <Backlinks path={active.path} />}
           </>

@@ -958,6 +958,66 @@ body {
   flex-direction: column;
 }
 
+/* Frontmatter YAML, en tête de note : tenu hors de l'éditeur WYSIWYG. */
+.frontmatter {
+  flex: 0 0 auto;
+  border-bottom: 1px solid var(--border);
+  padding: 6px clamp(20px, 5%, 88px) 6px clamp(57px, 6%, 104px);
+}
+
+.frontmatter-toggle {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  max-width: 100%;
+  background: none;
+  border: 0;
+  padding: 2px 0;
+  font: inherit;
+  font-size: 12px;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+
+.frontmatter-toggle:hover {
+  color: var(--text);
+}
+
+.frontmatter-chevron {
+  font-size: 10px;
+  line-height: 1;
+}
+
+.frontmatter-keys {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  opacity: 0.8;
+}
+
+.frontmatter-yaml {
+  display: block;
+  width: 100%;
+  margin: 6px 0 4px;
+  padding: 8px 10px;
+  resize: none;
+  overflow: hidden;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.5;
+  outline: none;
+}
+
+.frontmatter-yaml:focus {
+  border-color: var(--accent);
+}
+
 /* Liens entrants, en pied de note. Aligné sur la marge gauche du texte pour
    se lire comme une note de bas de page, pas comme une barre d'outils. */
 .backlinks {
