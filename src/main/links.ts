@@ -1,6 +1,7 @@
 import { ipcMain } from 'electron'
 import { promises as fsp } from 'fs'
 import { dirname, join, relative, sep } from 'path'
+import { WIKILINK, pointsTo, rewriteWikilinks, splitTarget } from './wikilinks'
 
 /* Suivi des liens entre notes : quand un fichier ou un dossier est déplacé ou
    renommé depuis l'arborescence, les liens markdown relatifs doivent être
@@ -105,13 +106,16 @@ export function registerLinkHandlers(): void {
           changed = true
           return `${prefix}${nextHref}${suffix}`
         })
+        // Wikilinks : par nom (renommage) ou par chemin depuis la racine.
+        const wiki = rewriteWikilinks(updated, root, oldPath, newPath)
+        if (wiki.changed) changed = true
 
         if (changed) {
           try {
             // Volontairement PAS marqué comme écriture interne : le watcher
             // doit prévenir le renderer pour que les onglets ouverts se
             // rechargent avec les liens corrigés.
-            await fsp.writeFile(note, updated, 'utf-8')
+            await fsp.writeFile(note, wiki.text, 'utf-8')
             touched++
           } catch {
             // fichier en lecture seule ou disparu : on continue
@@ -151,6 +155,15 @@ export function registerBacklinkHandler(): void {
           if (resolveTarget(note, match[2]) === target) {
             found.push(note)
             break
+          }
+        }
+        // Wikilinks Obsidian, s'il n'a pas déjà été compté par un lien markdown.
+        if (found[found.length - 1] !== note) {
+          for (const w of content.matchAll(WIKILINK)) {
+            if (pointsTo(splitTarget(w[1]).target, target, root)) {
+              found.push(note)
+              break
+            }
           }
         }
       }
