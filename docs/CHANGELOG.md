@@ -4,7 +4,27 @@ All notable changes to Stanote are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## \[1.6.1] — 2026-10-13
+## \[1.6.2] - 2026-10-19
+
+### Added
+
+* Obsidian wikilinks: `[[note]]`, `[[note|label]]`, `[[note#heading]]` and
+  `[[folder/note]]` show as links. A click opens the note, found by name in the
+  whole folder (Cmd+click: in the other column); a missing note is created next
+  to the current one. Wikilinks count in backlinks and follow renamed notes.
+
+* Obsidian callouts: `> [!type] Title` becomes a box coloured by its type.
+
+* YAML frontmatter shows as a collapsible header at the top of the note, and
+  can be edited as plain YAML.
+
+### Fixed
+
+* Saving a note no longer damages its YAML frontmatter, wikilinks or callouts.
+
+* HTML comments stay visible but discreet.
+
+## \[1.6.1] - 2026-10-13
 
 ### Changed
 
