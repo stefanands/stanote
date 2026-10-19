@@ -14,7 +14,7 @@ permissions:
 
 env:
   # À incrémenter à chaque nouvelle bêta publiée.
-  BETA_VERSION: 1.6.0-beta.1
+  BETA_VERSION: 1.6.2-beta.1
 
 jobs:
   build-windows:
@@ -57,5 +57,5 @@ jobs:
           gh release create windows-beta release/*.exe \
             --prerelease \
             --target "$GITHUB_SHA" \
-            --title "Stanote pour Windows — bêta $BETA_VERSION" \
+            --title "Stanote pour Windows, bêta $BETA_VERSION" \
             --notes-file notes.md

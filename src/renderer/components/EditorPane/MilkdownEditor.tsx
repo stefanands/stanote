@@ -10,7 +10,10 @@ import { useT, type Locale } from '../../i18n'
 import FindBar from './FindBar'
 import LinkPicker from './LinkPicker'
 import { useTabs } from '../../stores/tabs'
-import { resolveLink } from '../../lib/path'
+import { useWorkspace } from '../../stores/workspace'
+import { dirname, resolveLink } from '../../lib/path'
+import { resolveWikilink } from '../../lib/wikilinks'
+import { obsidianKey, obsidianPlugin } from './obsidianPlugin'
 
 interface Props {
   /** chemin du fichier : sert à mémoriser la position de lecture */
@@ -50,9 +53,17 @@ export default function MilkdownEditor({
     })
     crepeRef.current = crepe
 
-    // Plugin chercher/remplacer (surlignage des occurrences), piloté par FindBar.
+    // Chercher/remplacer (surlignage des occurrences, piloté par FindBar), et
+    // rendu de la syntaxe Obsidian (wikilinks, callouts).
     crepe.editor.config((ctx) => {
-      ctx.update(prosePluginsCtx, (plugins) => [...plugins, search()])
+      ctx.update(prosePluginsCtx, (plugins) => [
+        ...plugins,
+        search(),
+        obsidianPlugin(() => {
+          const ws = useWorkspace.getState()
+          return { path, root: ws.rootPath, tree: ws.tree }
+        })
+      ])
     })
 
     crepe.on((listener) => {
@@ -100,6 +111,14 @@ export default function MilkdownEditor({
     const host = rootRef.current
     if (!host) return
     const onClick = (e: MouseEvent): void => {
+      // Wikilink rendu : ouvre la note visée, ou la crée dans ce dossier.
+      const wiki = (e.target as HTMLElement | null)?.closest?.('[data-wikilink]') as HTMLElement | null
+      if (wiki?.dataset.wikilink) {
+        e.preventDefault()
+        e.stopPropagation()
+        void openWikilink(wiki.dataset.wikilink, e.metaKey || e.ctrlKey)
+        return
+      }
       const link = (e.target as HTMLElement | null)?.closest?.('a')
       const href = link?.getAttribute('href')
       if (!href) return
@@ -123,6 +142,43 @@ export default function MilkdownEditor({
     host.addEventListener('click', onClick, true)
     return () => host.removeEventListener('click', onClick, true)
   }, [path])
+
+  /** Ouvre la note d'un wikilink ; une cible introuvable (nom simple) est créée
+   *  à côté de la note courante, comme dans Obsidian. */
+  const openWikilink = async (target: string, otherPane: boolean): Promise<void> => {
+    const { rootPath, tree } = useWorkspace.getState()
+    if (!rootPath) return
+    let file = resolveWikilink(target, path, rootPath, tree)
+    if (!file) {
+      if (/[\\/]/.test(target)) {
+        alert(missingLinkRef.current)
+        return
+      }
+      const name = /\.[^./]+$/.test(target) ? target : `${target}.md`
+      try {
+        file = await window.stancode.fs.create(dirname(path), name, 'file')
+      } catch (err) {
+        console.error(err)
+        return
+      }
+    }
+    const tabs = useTabs.getState()
+    if (otherPane) tabs.focusPane(tabs.focusedPane === 0 ? 1 : 0)
+    void tabs.openFile(file)
+  }
+
+  // Une note créée, renommée ou supprimée change la résolution des wikilinks :
+  // on redemande le rendu des décorations.
+  useEffect(
+    () =>
+      useWorkspace.subscribe((s, prev) => {
+        if (s.tree === prev.tree) return
+        const view = getView()
+        if (view) view.dispatch(view.state.tr.setMeta(obsidianKey, 'refresh'))
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  )
 
   const getView = (): EditorView | null => {
     if (!readyRef.current || !crepeRef.current) return null

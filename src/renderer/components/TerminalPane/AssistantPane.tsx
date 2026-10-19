@@ -200,15 +200,40 @@ export default function AssistantPane(): JSX.Element {
 
   // Champ d'une ligne par défaut, qui grandit avec le texte jusqu'à
   // INPUT_MAX_HEIGHT, puis défile.
-  useLayoutEffect(() => {
+  const fitInput = (): void => {
     const el = inputRef.current
     if (!el) return
+    // Vide : hauteur naturelle d'une ligne (rows=1). Mesuré, le champ vide
+    // compterait son texte indicatif, replié sur plusieurs lignes quand le
+    // panneau est étroit.
+    if (!el.value) {
+      el.style.height = ''
+      el.style.overflowY = 'hidden'
+      return
+    }
     el.style.height = 'auto'
     const border = el.offsetHeight - el.clientHeight
     const wanted = el.scrollHeight + border
     el.style.height = `${Math.min(wanted, INPUT_MAX_HEIGHT)}px`
     el.style.overflowY = wanted > INPUT_MAX_HEIGHT ? 'auto' : 'hidden'
-  }, [input, active?.id])
+  }
+  useLayoutEffect(fitInput, [input, active?.id, picking])
+
+  // La largeur change (disposition, redimensionnement) : le texte se replie
+  // autrement, la hauteur doit suivre.
+  useEffect(() => {
+    const el = inputRef.current
+    if (!el) return
+    let width = el.clientWidth
+    const observer = new ResizeObserver(() => {
+      if (el.clientWidth === width) return // nos propres changements de hauteur
+      width = el.clientWidth
+      fitInput()
+    })
+    observer.observe(el)
+    return () => observer.disconnect()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active?.id, picking])
 
   // Suit le fil : colle en bas à chaque nouveau contenu.
   useEffect(() => {

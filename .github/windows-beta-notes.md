@@ -1,8 +1,8 @@
-## Stanote pour Windows — bêta
+## Stanote pour Windows, bêta
 
 > ⚠️ **Version bêta.** Stanote pour Windows n'a pas encore été éprouvé sur de vrais PC : il peut présenter des défauts que la version Mac n'a pas. Vos retours sont précieux.
 
-Le contenu est celui de **Stanote 1.6.0** pour Mac : éditeur de notes en markdown, liens entre notes, terminal, et assistants au choix (Claude, Mistral, Codex, Ollama).
+Le contenu est celui de **Stanote 1.6.2** pour Mac : éditeur de notes en markdown, liens entre notes, notes au format Obsidian (wikilinks, encadrés, métadonnées), terminal, et assistants au choix (Claude, Mistral, Codex, Ollama).
 
 ### Installation
 

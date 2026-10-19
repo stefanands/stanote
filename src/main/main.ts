@@ -19,6 +19,7 @@ protocol.registerSchemesAsPrivileged([
 
 const APP_MIME: Record<string, string> = {
   '.html': 'text/html',
+  '.htm': 'text/html',
   '.js': 'text/javascript',
   '.mjs': 'text/javascript',
   '.css': 'text/css',
@@ -75,9 +76,13 @@ function startAppServer(): Promise<string> {
             const rel = rawPath === '/' || rawPath === '' ? '/index.html' : rawPath
             file = join(rendererDir, rel.replace(/^(\.\.[/\\])+/, ''))
           }
-          const data = await fsp.readFile(file)
+          const raw = await fsp.readFile(file)
           const ext = file.slice(file.lastIndexOf('.')).toLowerCase()
-          res.writeHead(200, { 'content-type': APP_MIME[ext] ?? 'application/octet-stream' })
+          const isUserPage = rawPath.startsWith('/__doc/') && (ext === '.html' || ext === '.htm')
+          const data = isUserPage ? withLinkRelay(raw) : raw
+          const charset = isUserPage ? htmlCharset(raw) : null
+          const type = APP_MIME[ext] ?? 'application/octet-stream'
+          res.writeHead(200, { 'content-type': charset ? `${type}; charset=${charset}` : type })
           res.end(data)
         } catch {
           res.writeHead(404)
@@ -114,6 +119,7 @@ import { registerFsHandlers, disposeFsForWebContents } from './fs'
 import { registerPtyHandlers, disposePtyForWebContents } from './pty'
 import { registerSearchHandlers, disposeSearchForWebContents } from './search'
 import { registerAssistantHandlers, disposeAssistantForWebContents } from './assistant'
+import { htmlCharset, withLinkRelay } from './docPage'
 import { registerBacklinkHandler, registerLinkHandlers } from './links'
 import { registerContextMenu } from './contextMenu'
 import { setupMenu } from './menu'
