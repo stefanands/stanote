@@ -210,6 +210,31 @@ body {
   position: relative;
 }
 
+/* Onglets d'une colonne : celui affiché occupe la place ; les autres, gardés
+   montés, sont superposés et invisibles, mais gardent leur mise en page (et
+   donc leur position de défilement). */
+.tab-views {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.tab-view {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.tab-view.is-hidden {
+  position: absolute;
+  inset: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
 /* Vue double : la colonne qui a le focus est discrètement marquée (c'est elle
    qui reçoit les ouvertures et les raccourcis). */
 .editor-pane.pane-focused .tabbar {
