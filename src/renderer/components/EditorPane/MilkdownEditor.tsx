@@ -14,6 +14,7 @@ import { useWorkspace } from '../../stores/workspace'
 import { dirname, resolveLink } from '../../lib/path'
 import { resolveWikilink } from '../../lib/wikilinks'
 import { obsidianKey, obsidianPlugin } from './obsidianPlugin'
+import { rememberScroll, restoreScroll } from '../../lib/scrollMemory'
 
 interface Props {
   /** chemin du fichier : sert à mémoriser la position de lecture */
@@ -21,17 +22,18 @@ interface Props {
   initialValue: string
   locale: Locale
   onChange: (markdown: string) => void
+  /** onglet affiché dans la colonne qui a le focus : lui seul ouvre la
+   *  recherche et le sélecteur de liens (les autres onglets gardés en
+   *  mémoire restent montés, mais cachés) */
+  current?: boolean
 }
-
-/* Position de défilement par fichier : changer d'onglet démonte l'éditeur, on
-   restaure donc la position à la réouverture plutôt que de repartir en haut. */
-const scrollByPath = new Map<string, number>()
 
 export default function MilkdownEditor({
   path,
   initialValue,
   locale,
-  onChange
+  onChange,
+  current = true
 }: Props): JSX.Element {
   const rootRef = useRef<HTMLDivElement>(null)
   const onChangeRef = useRef(onChange)
@@ -84,14 +86,14 @@ export default function MilkdownEditor({
         return
       }
       readyRef.current = true
-      // Restaure la position après le rendu du document.
-      const top = scrollByPath.get(path)
-      if (top && host) requestAnimationFrame(() => host.scrollTo({ top }))
+      // Éditeur recréé : on retrouve la position de lecture.
+      if (host) restoreScroll(host, path)
     })
+    const stopScroll = host ? rememberScroll(host, path) : null
 
     return () => {
       disposed = true
-      if (host) scrollByPath.set(path, host.scrollTop)
+      stopScroll?.()
       crepeRef.current = null
       try {
         void crepe.destroy()
@@ -210,8 +212,10 @@ export default function MilkdownEditor({
 
   return (
     <div className="milkdown-wrap">
-      {findOpen && <FindBar getView={getView} onClose={() => useUi.getState().setFindOpen(false)} />}
-      {linkPickerOpen && (
+      {current && findOpen && (
+        <FindBar getView={getView} onClose={() => useUi.getState().setFindOpen(false)} />
+      )}
+      {current && linkPickerOpen && (
         <LinkPicker
           notePath={path}
           onClose={() => useUi.getState().setLinkPicker(false)}

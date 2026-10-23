@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { rememberScroll, restoreScroll } from '../../lib/scrollMemory'
 import {
   EditorView,
   keymap,
@@ -248,7 +249,14 @@ export default function CodeEditor({ path, initialValue, locale, onChange }: Pro
       })
     })
     viewRef.current = view
-    return () => view.destroy()
+    // Position de lecture retrouvée quand l'éditeur est recréé.
+    const key = `code:${path}`
+    restoreScroll(view.scrollDOM, key)
+    const stopScroll = rememberScroll(view.scrollDOM, key)
+    return () => {
+      stopScroll()
+      view.destroy()
+    }
     // initialValue/locale ignorés : le remount est piloté par la key
     // (path:version:locale) posée par EditorPane.
     // eslint-disable-next-line react-hooks/exhaustive-deps
