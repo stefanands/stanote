@@ -112,19 +112,28 @@ export default function MilkdownEditor({
   useEffect(() => {
     const host = rootRef.current
     if (!host) return
-    /* Wikilink rendu : il réagit dès l'appui. Au clic, il serait trop tard :
-       l'appui a déjà placé le curseur dans le lien, qui repasse en syntaxe
-       brute et cesse d'être un lien. Option+appui laisse l'éditeur placer le
+    /* Wikilink rendu. L'appui laissé à l'éditeur y placerait le curseur : le
+       lien repasserait en syntaxe brute et ne serait plus cliquable au moment
+       du clic. On bloque donc l'appui, et c'est le clic, appui et relâchement
+       sur le même lien, qui l'ouvre. Option+clic laisse l'éditeur placer le
        curseur, pour modifier le lien. */
+    const wikiOf = (e: MouseEvent): HTMLElement | null =>
+      e.button === 0 && !e.altKey
+        ? ((e.target as HTMLElement | null)?.closest?.('[data-wikilink]') as HTMLElement | null)
+        : null
     const onMouseDown = (e: MouseEvent): void => {
-      if (e.button !== 0 || e.altKey) return
-      const wiki = (e.target as HTMLElement | null)?.closest?.('[data-wikilink]') as HTMLElement | null
-      if (!wiki?.dataset.wikilink) return
+      if (!wikiOf(e)?.dataset.wikilink) return
       e.preventDefault()
       e.stopPropagation()
-      void openWikilink(wiki.dataset.wikilink, e.metaKey || e.ctrlKey)
     }
     const onClick = (e: MouseEvent): void => {
+      const wiki = wikiOf(e)
+      if (wiki?.dataset.wikilink) {
+        e.preventDefault()
+        e.stopPropagation()
+        void openWikilink(wiki.dataset.wikilink, e.metaKey || e.ctrlKey)
+        return
+      }
       const link = (e.target as HTMLElement | null)?.closest?.('a')
       const href = link?.getAttribute('href')
       if (!href) return
