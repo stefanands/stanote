@@ -112,15 +112,19 @@ export default function MilkdownEditor({
   useEffect(() => {
     const host = rootRef.current
     if (!host) return
-    const onClick = (e: MouseEvent): void => {
-      // Wikilink rendu : ouvre la note visée, ou la crée dans ce dossier.
+    /* Wikilink rendu : il réagit dès l'appui. Au clic, il serait trop tard :
+       l'appui a déjà placé le curseur dans le lien, qui repasse en syntaxe
+       brute et cesse d'être un lien. Option+appui laisse l'éditeur placer le
+       curseur, pour modifier le lien. */
+    const onMouseDown = (e: MouseEvent): void => {
+      if (e.button !== 0 || e.altKey) return
       const wiki = (e.target as HTMLElement | null)?.closest?.('[data-wikilink]') as HTMLElement | null
-      if (wiki?.dataset.wikilink) {
-        e.preventDefault()
-        e.stopPropagation()
-        void openWikilink(wiki.dataset.wikilink, e.metaKey || e.ctrlKey)
-        return
-      }
+      if (!wiki?.dataset.wikilink) return
+      e.preventDefault()
+      e.stopPropagation()
+      void openWikilink(wiki.dataset.wikilink, e.metaKey || e.ctrlKey)
+    }
+    const onClick = (e: MouseEvent): void => {
       const link = (e.target as HTMLElement | null)?.closest?.('a')
       const href = link?.getAttribute('href')
       if (!href) return
@@ -141,8 +145,12 @@ export default function MilkdownEditor({
         }
       })
     }
+    host.addEventListener('mousedown', onMouseDown, true)
     host.addEventListener('click', onClick, true)
-    return () => host.removeEventListener('click', onClick, true)
+    return () => {
+      host.removeEventListener('mousedown', onMouseDown, true)
+      host.removeEventListener('click', onClick, true)
+    }
   }, [path])
 
   /** Ouvre la note d'un wikilink ; une cible introuvable (nom simple) est créée

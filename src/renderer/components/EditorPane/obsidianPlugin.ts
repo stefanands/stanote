@@ -38,6 +38,9 @@ function build(state: EditorState, ctx: WikiContext): DecorationSet {
   const touches = (a: number, b: number): boolean => selFrom <= b && selTo >= a
 
   state.doc.descendants((node, pos) => {
+    // Le code s'affiche tel quel : un [[exemple]] de syntaxe n'est pas un lien.
+    if (node.type.name === 'code_block') return false
+
     // --- callouts ---
     if (node.type.name === 'blockquote') {
       const first = node.firstChild
@@ -76,7 +79,8 @@ function build(state: EditorState, ctx: WikiContext): DecorationSet {
     }
 
     // --- wikilinks ---
-    if (node.isText && node.text && node.text.includes('[[')) {
+    const inCode = node.marks.some((mark) => mark.type.name === 'inlineCode')
+    if (node.isText && node.text && !inCode && node.text.includes('[[')) {
       for (const m of node.text.matchAll(WIKILINK)) {
         const a = pos + (m.index ?? 0)
         const b = a + m[0].length
@@ -90,7 +94,7 @@ function build(state: EditorState, ctx: WikiContext): DecorationSet {
               resolved ? '' : 'is-unresolved',
               editing ? 'is-editing' : ''
             ].join(' ').trim(),
-            // Cliquable seulement une fois rendu : en édition, un clic place le curseur.
+            // Cliquable seulement une fois rendu : en édition, un appui place le curseur.
             ...(editing ? {} : { 'data-wikilink': link.target })
           })
         )
