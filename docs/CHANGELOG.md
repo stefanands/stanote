@@ -4,6 +4,30 @@ All notable changes to Stanote are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## \[1.6.4] - 2026-11-12
+
+### Added
+
+* "New note" now heads the "/" menu: type a name, the note is created next to
+  the current one, linked in place of the "/" and opened.
+
+* The first letter typed in a paragraph, heading or list item is capitalised.
+  Not after Shift+Enter; Cmd+Z right after the letter restores the lowercase.
+
+### Changed
+
+* The terminal starts hidden each time Stanote opens.
+
+* Lists in the sidebar, search, quick open, backlinks and link picker are a
+  little more spacious.
+
+### Fixed
+
+* Windows: the title and body fonts now have free equivalents bundled with the
+  app (Inter, Jost, Playfair Display) instead of falling back to system fonts.
+
+* Windows: Ctrl + "+", "-" and "0" zoom the window.
+
 ## \[1.6.3] - 2026-10-25
 
 ### Changed
