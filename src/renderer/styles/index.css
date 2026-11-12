@@ -403,7 +403,7 @@ body {
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 4px 8px;
+  padding: 5px 8px;
   cursor: pointer;
   white-space: nowrap;
   overflow: hidden;
@@ -1191,7 +1191,7 @@ body {
   white-space: nowrap;
   background: none;
   border: 0;
-  padding: 3px 0;
+  padding: 4px 0;
   font: inherit;
   font-size: 13px;
   color: var(--accent);
@@ -1241,7 +1241,7 @@ body {
   align-items: baseline;
   justify-content: space-between;
   gap: 10px;
-  padding: 6px 9px;
+  padding: 7px 9px;
   border-radius: 6px;
   font-size: 13px;
   color: var(--text);
@@ -2171,7 +2171,7 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 3px 10px;
+  padding: 4px 10px;
   font-weight: 600;
   font-size: 12px;
   color: var(--text);
@@ -2198,7 +2198,7 @@ body {
 .search-match {
   display: flex;
   gap: 8px;
-  padding: 2px 10px 2px 18px;
+  padding: 3px 10px 3px 18px;
   font-size: 12px;
   color: var(--text-dim);
   cursor: pointer;
@@ -2264,7 +2264,7 @@ body {
 }
 
 .quickopen-item {
-  padding: 4px 8px;
+  padding: 5px 8px;
   font-size: 12px;
   color: var(--text-dim);
   border-radius: 4px;
