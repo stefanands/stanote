@@ -14,6 +14,7 @@ import { useWorkspace } from '../../stores/workspace'
 import { dirname, resolveLink } from '../../lib/path'
 import { resolveWikilink } from '../../lib/wikilinks'
 import { obsidianKey, obsidianPlugin } from './obsidianPlugin'
+import { autoCapitalPlugin } from './autoCapital'
 import { rememberScroll, restoreScroll } from '../../lib/scrollMemory'
 
 interface Props {
@@ -42,6 +43,7 @@ export default function MilkdownEditor({
   const crepeRef = useRef<Crepe | null>(null)
   const findOpen = useUi((s) => s.findOpen)
   const linkPickerOpen = useUi((s) => s.linkPicker)
+  const newNoteOpen = useUi((s) => s.newNote)
   const t = useT()
   // Message lu depuis un écouteur natif : gardé en ref pour rester à jour.
   const missingLinkRef = useRef(t('linkMissing'))
@@ -61,6 +63,7 @@ export default function MilkdownEditor({
       ctx.update(prosePluginsCtx, (plugins) => [
         ...plugins,
         search(),
+        autoCapitalPlugin(),
         obsidianPlugin(() => {
           const ws = useWorkspace.getState()
           return { path, root: ws.rootPath, tree: ws.tree }
@@ -208,9 +211,12 @@ export default function MilkdownEditor({
     }
   }
 
-  /** Insère (ou transforme la sélection en) un lien vers une autre note. */
-  const insertLink = (href: string, label: string): void => {
+  /** Insère (ou transforme la sélection en) un lien vers une autre note. Une
+   *  note tout juste créée par « / » → Nouvelle note s'ouvre ensuite. */
+  const insertLink = (href: string, label: string, created?: string): void => {
     useUi.getState().setLinkPicker(false)
+    const fromSlash = useUi.getState().newNote
+    useUi.getState().setNewNote(false)
     const view = getView()
     if (!view) return
     const { state } = view
@@ -224,7 +230,8 @@ export default function MilkdownEditor({
     // ensuite vient s'ajouter au libellé du lien.
     tr.removeStoredMark(mark)
     view.dispatch(tr.scrollIntoView())
-    view.focus()
+    if (fromSlash && created) void useTabs.getState().openFile(created)
+    else view.focus()
   }
 
   return (
@@ -236,6 +243,14 @@ export default function MilkdownEditor({
         <LinkPicker
           notePath={path}
           onClose={() => useUi.getState().setLinkPicker(false)}
+          onPick={insertLink}
+        />
+      )}
+      {current && newNoteOpen && (
+        <LinkPicker
+          createOnly
+          notePath={path}
+          onClose={() => useUi.getState().setNewNote(false)}
           onPick={insertLink}
         />
       )}

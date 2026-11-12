@@ -17,8 +17,10 @@ interface Props {
   /** note en cours d'édition : les liens sont relatifs à elle */
   notePath: string
   onClose: () => void
-  /** insère le lien dans le document */
-  onPick: (href: string, label: string) => void
+  /** insère le lien dans le document ; `created` : chemin de la note créée */
+  onPick: (href: string, label: string, created?: string) => void
+  /** « / » → Nouvelle note : on saisit seulement un nom, la note est créée */
+  createOnly?: boolean
 }
 
 /** Cherche un dossier dans l'arbre par son chemin absolu. */
@@ -36,8 +38,15 @@ const isNote = (n: TreeNode): boolean => n.type === 'file' && /\.(md|markdown|tx
 const withoutExt = (name: string): string => name.replace(/\.(md|markdown|txt)$/i, '')
 
 /** Sélecteur de note à lier (Cmd+K) : notes du dossier courant et du dossier
- *  parent uniquement ; un nom inconnu crée la note dans le dossier courant. */
-export default function LinkPicker({ notePath, onClose, onPick }: Props): JSX.Element {
+ *  parent uniquement ; un nom inconnu crée la note dans le dossier courant.
+ *  En mode création, seul le nom est demandé ; un nom déjà pris lie la note
+ *  existante plutôt que d'en créer une seconde. */
+export default function LinkPicker({
+  notePath,
+  onClose,
+  onPick,
+  createOnly = false
+}: Props): JSX.Element {
   const t = useT()
   const { rootPath, tree } = useWorkspace()
   const [query, setQuery] = useState('')
@@ -69,9 +78,10 @@ export default function LinkPicker({ notePath, onClose, onPick }: Props): JSX.El
 
   const matches = useMemo(() => {
     const q = query.trim().toLowerCase()
+    if (createOnly) return q ? candidates.filter((c) => c.label.toLowerCase() === q) : []
     const found = q ? candidates.filter((c) => c.label.toLowerCase().includes(q)) : candidates
     return found.slice(0, 50)
-  }, [candidates, query])
+  }, [candidates, query, createOnly])
 
   const trimmed = query.trim()
   // Proposition de création si le nom saisi ne correspond à aucune note.
@@ -87,7 +97,9 @@ export default function LinkPicker({ notePath, onClose, onPick }: Props): JSX.El
       const name = /\.[^./]+$/.test(trimmed) ? trimmed : `${trimmed}.md`
       try {
         const created = await window.stancode.fs.create(noteDir, name, 'file')
-        onPick(relativeLink(notePath, created), withoutExt(name))
+        // La note naît avec son titre, comme une page Notion.
+        if (createOnly) await window.stancode.fs.writeFile(created, `# ${withoutExt(name)}\n`)
+        onPick(relativeLink(notePath, created), withoutExt(name), created)
       } catch (err) {
         console.error(err)
         onClose()
@@ -105,7 +117,7 @@ export default function LinkPicker({ notePath, onClose, onPick }: Props): JSX.El
         <input
           ref={inputRef}
           className="link-picker-input"
-          placeholder={t('linkPlaceholder')}
+          placeholder={t(createOnly ? 'newNotePlaceholder' : 'linkPlaceholder')}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => {
@@ -148,7 +160,9 @@ export default function LinkPicker({ notePath, onClose, onPick }: Props): JSX.El
               <span className="link-picker-where">{t('linkHere')}</span>
             </div>
           )}
-          {total === 0 && <div className="link-picker-empty">{t('linkNoNote')}</div>}
+          {total === 0 && (
+            <div className="link-picker-empty">{t(createOnly ? 'newNoteHint' : 'linkNoNote')}</div>
+          )}
         </div>
       </div>
     </>

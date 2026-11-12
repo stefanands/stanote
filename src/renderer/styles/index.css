@@ -39,8 +39,8 @@
   --callout-example: #a98bd6;
   --callout-quote: #9aa0a2;
   --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
-  --font-body: 'Optima', 'Segoe UI', system-ui, sans-serif;
-  --font-title: 'Didot', 'Bodoni 72', Georgia, serif;
+  --font-body: 'Optima', 'Inter', 'Segoe UI', system-ui, sans-serif;
+  --font-title: 'Didot', 'Bodoni 72', 'Playfair Display', Georgia, serif;
 }
 
 :root[data-theme='light'] {

@@ -8,28 +8,33 @@ export interface FontPair {
 }
 
 /** SF Pro = police d'interface système (San Francisco sur macOS). */
-const SF_PRO = "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', system-ui, sans-serif"
+const SF_PRO = "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', 'Segoe UI', system-ui, sans-serif"
 
 /** Paires titre/corps pour l'affichage markdown uniquement. Les titres sont
- *  toujours rendus en gras (voir index.css). Polices système macOS. */
+ *  toujours rendus en gras (voir index.css). Polices système macOS, chacune
+ *  suivie de son équivalent libre embarqué dans l'app (main.tsx), qui prend
+ *  le relais sous Windows : Inter pour SF Pro et Optima, Jost pour Futura,
+ *  Playfair Display pour Didot. */
+const OPTIMA = '"Optima", "Inter", "Segoe UI", system-ui, sans-serif'
+
 export const FONT_PAIRS: FontPair[] = [
   { id: 'sfpro', label: 'SF Pro', title: SF_PRO, body: SF_PRO },
   {
     id: 'didot-optima',
     label: 'Didot · Optima',
-    title: '"Didot", "Bodoni 72", Georgia, serif',
-    body: '"Optima", "Segoe UI", system-ui, sans-serif'
+    title: '"Didot", "Bodoni 72", "Playfair Display", Georgia, serif',
+    body: OPTIMA
   },
   {
     id: 'futura-optima',
     label: 'Futura · Optima',
-    title: '"Futura", "Trebuchet MS", system-ui, sans-serif',
-    body: '"Optima", "Segoe UI", system-ui, sans-serif'
+    title: '"Futura", "Jost", "Trebuchet MS", system-ui, sans-serif',
+    body: OPTIMA
   },
   {
     id: 'optima-sfpro',
     label: 'Optima · SF Pro',
-    title: '"Optima", "Segoe UI", system-ui, sans-serif',
+    title: OPTIMA,
     body: SF_PRO
   }
 ]

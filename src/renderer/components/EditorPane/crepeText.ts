@@ -1,6 +1,12 @@
 import { Crepe } from '@milkdown/crepe'
+import { commandsCtx } from '@milkdown/kit/core'
+import { clearTextInCurrentBlockCommand } from '@milkdown/kit/preset/commonmark'
 import { EditorView } from '@codemirror/view'
 import type { Locale } from '../../i18n'
+import { useUi } from '../../stores/ui'
+
+/** Icône « nouvelle note » du menu slash : page au coin plié, avec un +. */
+const newNoteIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M12 11v6M9 14h6"/></svg>`
 
 /** Libellés localisés de l'UI Milkdown/Crepe (menu slash, placeholder, liens,
  *  images). Ne passe que du texte : les icônes gardent leurs valeurs par défaut. */
@@ -17,6 +23,21 @@ export function crepeFeatureConfigs(locale: Locale): NonNullable<
       // les marges suivent la largeur du panneau, les 16 px de décalage par
       // défaut poussaient le « + » hors de la zone visible.
       blockHandle: { getOffset: () => 6 },
+      // « Nouvelle note », en tête du menu : le « / » tapé est effacé, puis on
+      // demande le nom de la note (LinkPicker en mode création).
+      buildMenu: (builder) => {
+        builder.addGroup('note', fr ? 'Note' : 'Note').addItem('newNote', {
+          label: fr ? 'Nouvelle note' : 'New note',
+          icon: newNoteIcon,
+          onRun: (ctx) => {
+            ctx.get(commandsCtx).call(clearTextInCurrentBlockCommand.key)
+            useUi.getState().setNewNote(true)
+          }
+        })
+        // build() rend la liste interne des groupes : on y remonte le nôtre.
+        const groups = builder.build()
+        groups.unshift(groups.pop()!)
+      },
       textGroup: {
         label: fr ? 'Texte' : 'Text',
         text: { label: fr ? 'Texte' : 'Text' },

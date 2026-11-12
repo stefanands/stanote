@@ -24,6 +24,8 @@
   "dependencies": {
     "@fontsource/inter": "^5.2.8",
     "@fontsource/jetbrains-mono": "^5.2.8",
+    "@fontsource/jost": "^5.3.0",
+    "@fontsource/playfair-display": "^5.3.0",
     "@milkdown/crepe": "^7.21.2",
     "@replit/codemirror-css-color-picker": "^6.3.0",
     "@replit/codemirror-indentation-markers": "^6.5.3",
