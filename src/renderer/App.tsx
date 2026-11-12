@@ -95,7 +95,8 @@ function copyActivePath(): void {
 export default function App(): JSX.Element {
   const t = useT()
   const [showExplorer, setShowExplorer] = usePersistedFlag('stanote:showExplorer', true)
-  const [showTerminal, setShowTerminal] = usePersistedFlag('stanote:showTerminal', true)
+  // Terminal masqué à chaque ouverture : on le rappelle au besoin (bouton >_).
+  const [showTerminal, setShowTerminal] = useState(false)
   const sidebarView = useUi((s) => s.sidebarView)
   const layout = useUi((s) => s.layout)
   const theme = useTheme((s) => s.theme)

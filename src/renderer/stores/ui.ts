@@ -15,11 +15,14 @@ interface UiState {
   findOpen: boolean
   /** sélecteur de note à lier (Cmd+K) */
   linkPicker: boolean
+  /** nom d'une nouvelle note à créer et lier (« / » → Nouvelle note) */
+  newNote: boolean
   layout: Layout
   setSidebarView: (view: 'files' | 'search') => void
   setQuickOpen: (open: boolean) => void
   setFindOpen: (open: boolean) => void
   setLinkPicker: (open: boolean) => void
+  setNewNote: (open: boolean) => void
   setLayout: (layout: Layout) => void
 }
 
@@ -28,11 +31,13 @@ export const useUi = create<UiState>((set) => ({
   quickOpen: false,
   findOpen: false,
   linkPicker: false,
+  newNote: false,
   layout: detectLayout(),
   setSidebarView: (sidebarView) => set({ sidebarView }),
   setQuickOpen: (quickOpen) => set({ quickOpen }),
   setFindOpen: (findOpen) => set({ findOpen }),
   setLinkPicker: (linkPicker) => set({ linkPicker }),
+  setNewNote: (newNote) => set({ newNote }),
   setLayout: (layout) => {
     localStorage.setItem('stanote:layout', layout)
     set({ layout })

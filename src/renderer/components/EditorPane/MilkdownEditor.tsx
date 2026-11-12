@@ -14,6 +14,8 @@ import { useWorkspace } from '../../stores/workspace'
 import { dirname, resolveLink } from '../../lib/path'
 import { resolveWikilink } from '../../lib/wikilinks'
 import { obsidianKey, obsidianPlugin } from './obsidianPlugin'
+import { autoCapitalPlugin } from './autoCapital'
+import { rememberScroll, restoreScroll } from '../../lib/scrollMemory'
 
 interface Props {
   /** chemin du fichier : sert à mémoriser la position de lecture */
@@ -21,17 +23,18 @@ interface Props {
   initialValue: string
   locale: Locale
   onChange: (markdown: string) => void
+  /** onglet affiché dans la colonne qui a le focus : lui seul ouvre la
+   *  recherche et le sélecteur de liens (les autres onglets gardés en
+   *  mémoire restent montés, mais cachés) */
+  current?: boolean
 }
-
-/* Position de défilement par fichier : changer d'onglet démonte l'éditeur, on
-   restaure donc la position à la réouverture plutôt que de repartir en haut. */
-const scrollByPath = new Map<string, number>()
 
 export default function MilkdownEditor({
   path,
   initialValue,
   locale,
-  onChange
+  onChange,
+  current = true
 }: Props): JSX.Element {
   const rootRef = useRef<HTMLDivElement>(null)
   const onChangeRef = useRef(onChange)
@@ -40,6 +43,7 @@ export default function MilkdownEditor({
   const crepeRef = useRef<Crepe | null>(null)
   const findOpen = useUi((s) => s.findOpen)
   const linkPickerOpen = useUi((s) => s.linkPicker)
+  const newNoteOpen = useUi((s) => s.newNote)
   const t = useT()
   // Message lu depuis un écouteur natif : gardé en ref pour rester à jour.
   const missingLinkRef = useRef(t('linkMissing'))
@@ -59,6 +63,7 @@ export default function MilkdownEditor({
       ctx.update(prosePluginsCtx, (plugins) => [
         ...plugins,
         search(),
+        autoCapitalPlugin(),
         obsidianPlugin(() => {
           const ws = useWorkspace.getState()
           return { path, root: ws.rootPath, tree: ws.tree }
@@ -84,14 +89,14 @@ export default function MilkdownEditor({
         return
       }
       readyRef.current = true
-      // Restaure la position après le rendu du document.
-      const top = scrollByPath.get(path)
-      if (top && host) requestAnimationFrame(() => host.scrollTo({ top }))
+      // Éditeur recréé : on retrouve la position de lecture.
+      if (host) restoreScroll(host, path)
     })
+    const stopScroll = host ? rememberScroll(host, path) : null
 
     return () => {
       disposed = true
-      if (host) scrollByPath.set(path, host.scrollTop)
+      stopScroll?.()
       crepeRef.current = null
       try {
         void crepe.destroy()
@@ -110,9 +115,22 @@ export default function MilkdownEditor({
   useEffect(() => {
     const host = rootRef.current
     if (!host) return
+    /* Wikilink rendu. L'appui laissé à l'éditeur y placerait le curseur : le
+       lien repasserait en syntaxe brute et ne serait plus cliquable au moment
+       du clic. On bloque donc l'appui, et c'est le clic, appui et relâchement
+       sur le même lien, qui l'ouvre. Option+clic laisse l'éditeur placer le
+       curseur, pour modifier le lien. */
+    const wikiOf = (e: MouseEvent): HTMLElement | null =>
+      e.button === 0 && !e.altKey
+        ? ((e.target as HTMLElement | null)?.closest?.('[data-wikilink]') as HTMLElement | null)
+        : null
+    const onMouseDown = (e: MouseEvent): void => {
+      if (!wikiOf(e)?.dataset.wikilink) return
+      e.preventDefault()
+      e.stopPropagation()
+    }
     const onClick = (e: MouseEvent): void => {
-      // Wikilink rendu : ouvre la note visée, ou la crée dans ce dossier.
-      const wiki = (e.target as HTMLElement | null)?.closest?.('[data-wikilink]') as HTMLElement | null
+      const wiki = wikiOf(e)
       if (wiki?.dataset.wikilink) {
         e.preventDefault()
         e.stopPropagation()
@@ -139,8 +157,12 @@ export default function MilkdownEditor({
         }
       })
     }
+    host.addEventListener('mousedown', onMouseDown, true)
     host.addEventListener('click', onClick, true)
-    return () => host.removeEventListener('click', onClick, true)
+    return () => {
+      host.removeEventListener('mousedown', onMouseDown, true)
+      host.removeEventListener('click', onClick, true)
+    }
   }, [path])
 
   /** Ouvre la note d'un wikilink ; une cible introuvable (nom simple) est créée
@@ -189,9 +211,12 @@ export default function MilkdownEditor({
     }
   }
 
-  /** Insère (ou transforme la sélection en) un lien vers une autre note. */
-  const insertLink = (href: string, label: string): void => {
+  /** Insère (ou transforme la sélection en) un lien vers une autre note. Une
+   *  note tout juste créée par « / » → Nouvelle note s'ouvre ensuite. */
+  const insertLink = (href: string, label: string, created?: string): void => {
     useUi.getState().setLinkPicker(false)
+    const fromSlash = useUi.getState().newNote
+    useUi.getState().setNewNote(false)
     const view = getView()
     if (!view) return
     const { state } = view
@@ -205,16 +230,27 @@ export default function MilkdownEditor({
     // ensuite vient s'ajouter au libellé du lien.
     tr.removeStoredMark(mark)
     view.dispatch(tr.scrollIntoView())
-    view.focus()
+    if (fromSlash && created) void useTabs.getState().openFile(created)
+    else view.focus()
   }
 
   return (
     <div className="milkdown-wrap">
-      {findOpen && <FindBar getView={getView} onClose={() => useUi.getState().setFindOpen(false)} />}
-      {linkPickerOpen && (
+      {current && findOpen && (
+        <FindBar getView={getView} onClose={() => useUi.getState().setFindOpen(false)} />
+      )}
+      {current && linkPickerOpen && (
         <LinkPicker
           notePath={path}
           onClose={() => useUi.getState().setLinkPicker(false)}
+          onPick={insertLink}
+        />
+      )}
+      {current && newNoteOpen && (
+        <LinkPicker
+          createOnly
+          notePath={path}
+          onClose={() => useUi.getState().setNewNote(false)}
           onPick={insertLink}
         />
       )}

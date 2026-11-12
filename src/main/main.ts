@@ -254,6 +254,22 @@ export function createWindow(opts: WindowOpts = {}): void {
     } catch {
       // langue non disponible : on garde la valeur par défaut
     }
+    // Zoom au clavier : le raccourci « Ctrl+Plus » du menu ne répond pas sous
+    // Windows (la touche « + » demande Maj, « = » n'y est pas reliée). On lit
+    // donc la touche elle-même : Ctrl + « + » ou « = » agrandit, Ctrl + « - »
+    // réduit, Ctrl + « 0 » revient à la taille réelle, pavé numérique compris.
+    win.webContents.on('before-input-event', (event, input) => {
+      if (input.type !== 'keyDown' || !input.control || input.alt) return
+      const wc = win.webContents
+      if (input.key === '+' || input.key === '=' || input.code === 'NumpadAdd') {
+        wc.setZoomLevel(Math.min(wc.getZoomLevel() + 0.5, 5))
+      } else if (input.key === '-' || input.code === 'NumpadSubtract') {
+        wc.setZoomLevel(Math.max(wc.getZoomLevel() - 0.5, -3))
+      } else if (input.key === '0' || input.code === 'Digit0' || input.code === 'Numpad0') {
+        wc.setZoomLevel(0)
+      } else return
+      event.preventDefault()
+    })
   }
   win.webContents.on('destroyed', () => {
     disposeFsForWebContents(id)
